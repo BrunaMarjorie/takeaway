@@ -4,6 +4,7 @@ const MongoClient = require('mongodb').MongoClient;
 const DB_NAME = process.env.MONGO_DB_NAME;
 const MONGO_OPTIONS = { useUnifiedTopology: true, useNewUrlParser: true };
 
+
 module.exports = () => {
     const count = (collectionName, query = {}) => {
         return new Promise((resolve, reject) => {
@@ -30,7 +31,7 @@ module.exports = () => {
     };
 
     const get = (collectionName, query = {}) => {
-        return new Promise((resolve, reject) => {          
+        return new Promise((resolve, reject) => {
             MongoClient.connect(uri, MONGO_OPTIONS, (err, client) => {
                 if (err) {
                     console.log(err);
@@ -77,41 +78,23 @@ module.exports = () => {
         });
     };
 
-    const updateIssueStatus = (query = {}, issueNumber, status) => {
+    const updateData = (collectionName, filter, updateDoc) => {
         return new Promise((resolve, reject) => {
             MongoClient.connect(uri, MONGO_OPTIONS, (err, client) => {
                 if (err) {
                     console.log(err);
-                    return reject("=== updateIssueStatus::MongoClient.connect");
+                    return reject("=== updateData::MongoClient.connect");
                 } else {
                     const db = client.db(DB_NAME);
-                    const collection1 = db.collection('users');
-                    const collection2 = db.collection('issues');
-                    //find if user is an admin or not;
-                    collection1.find(query).project({ '_id': 0, 'usertype': 1 }).toArray((err, docs) => {
+                    const collection = db.collection(collectionName);
+                    collection.updateOne(filter, updateDoc, (err, result) => {
                         if (err) {
-                            console.log("=== updateIssueStatus::collection.find");
+                            console.log("=== updateData::collection.updateOne");
                             console.log(err);
                             return reject(err);
                         } else {
-                            if (docs[0].usertype === "admin") {
-                                //if an admin, update status;
-                                collection2.updateOne({ 'issueNumber': issueNumber }, { $set: { 'status': status } }, (err, result) => {
-                                    if (err) {
-                                        console.log("=== updateIssueStatus::collection.updateOne");
-                                        console.log(err);
-                                        return reject(err);
-
-                                    } else {
-                                        resolve(result);
-                                        client.close();
-                                    }
-                                });
-                            } else { //response if not an admin;
-                                console.log("Error: Not authorized.");
-                                resolve(null);
-                                client.close();
-                            }
+                            resolve(result);
+                            client.close();
                         }
                     });
                 }
@@ -139,7 +122,7 @@ module.exports = () => {
                         } else {
                             var user = [];
                             for (i = 0; i < docs.length; i++) {
-                                if (docs[i].status === 'open'){
+                                if (docs[i].status === 'open') {
                                     user.push(docs[i].issueNumber);
                                 }
                             }
@@ -246,34 +229,72 @@ module.exports = () => {
         });
     };
 
-    //create array of watchers;
-    const usersWatchers = (query = {}) => {
+    //find previous bookings;
+    const findBookings = (date, time) => {
         return new Promise((resolve, reject) => {
             MongoClient.connect(uri, MONGO_OPTIONS, (err, client) => {
                 if (err) {
                     console.log(err);
-                    return reject("=== find::MongoClient.connect");
+                    return reject("=== findBookings::MongoClient.connect");
                 } else {
                     const db = client.db(DB_NAME);
-                    const collection = db.collection('watchers');
-                    collection.find(query).toArray((err, docs) => {
+                    const collection = db.collection('bookings');
+                    let query;
+                    //check if time is informed;
+                    if (!time) {
+                        //query if time is null;
+                        query = { 'date': date };
+                    } else {
+                        //query if time is informed;
+                        query = { 'date': date, 'time': time };
+                    }
+                    collection.find(query).project({ 'numTables': 1, 'numPeople': 1, '_id': 0 }).toArray((err, docs) => {
                         if (err) {
-                            console.log("=== sendEmail::collection.find{query}");
+                            console.log("=== findBookings::collection.find");
                             console.log(err);
                             return reject(err);
                         } else {
-                            if (docs.length === 0) {
+                            if (docs == null) {
                                 resolve(null);
                                 client.close();
                             } else {
-                                console.log(docs);
-                                var user = [];
+                                var booking = {};
+                                var tablesBooked = Number(0);
+                                var peopleBooked = Number(0);
                                 for (i = 0; i < docs.length; i++) {
-                                    user.push(docs[i].author);
+                                    let table = parseInt(docs[i].numTables);
+                                    tablesBooked += table;
+                                    let people = parseInt(docs[i].numPeople);
+                                    peopleBooked += people;
+                                    booking = { tablesBooked, peopleBooked };
                                 }
-                                resolve(user);
+                                resolve(booking);
                                 client.close();
                             }
+                        }
+                    });
+                }
+            });
+        });
+    };
+
+    const deleteData = (collectionName, query = {}) => {
+        return new Promise((resolve, reject) => {
+            MongoClient.connect(uri, MONGO_OPTIONS, (err, client) => {
+                if (err) {
+                    console.log(err);
+                    return reject("=== count::MongoClient.connect");
+                } else {
+                    const db = client.db(DB_NAME);
+                    const collection = db.collection(collectionName);
+                    collection.deleteOne(query, (err, docs) => {
+                        if (err) {
+                            console.log("=== count::collection.countDocuments");
+                            console.log(err);
+                            return reject(err);
+                        } else {
+                            resolve(docs);
+                            client.close();
                         }
                     });
                 }
@@ -289,8 +310,9 @@ module.exports = () => {
         find,
         findKeys,
         aggregate,
-        updateIssueStatus,
+        updateData,
         checkDueDate,
-        usersWatchers,
+        findBookings,
+        deleteData,
     };
 };

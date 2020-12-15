@@ -1,16 +1,11 @@
-const express = require('express');
-//const users = require('./model/users')();
-//let userLogged = null;
+const express = require('express'); //create express variable;
+const bodyParser = require('body-parser'); //create variable to read client entries;
+const router = require('./routes'); //create routes;
 
-const hostname = '0.0.0.0';
+const hostname = '0.0.0.0'; 
 const port = process.env.PORT || 3000;
 
 const app = module.exports = express();
-const router = require('./routes');
-
-app.use('/', router);
-
-app.use(express.json());
 
 //logging 
 app.use((request, response, next) => {
@@ -18,13 +13,18 @@ app.use((request, response, next) => {
     next();
 });
 
+//initiate bodyParser;
+app.use(bodyParser.json());
+
+//initiate Router;
 app.use('/', router);
 
+//listen to the server;
 app.listen(port, hostname, () => {
     console.log(`Server running at http://${hostname}:${port}/`)
 });
 
-
+//error if route informed is not valid;
 app.use((request, response) => {
     response.status(404).json({
         error: 404,
