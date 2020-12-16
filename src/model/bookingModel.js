@@ -62,16 +62,16 @@ module.exports = () => {
     }
 
     const add = async (name, email, phone, date, time, numPeople, numTables) => {
-        let valid;
+        let tablesAlreadyBooked = Number(); //number of tables already booked;
         try {
             //check if spot has already any bookings;
             const bookings = await db.findBookings(date, time);
             if (!bookings) {
-                //return if no booking is found;
-                valid = 0;
+                //set tables booked as '0' if no booking is found;
+                tablesAlreadyBooked = 0;
             } else {
-                //extract number of tables booked;
-                valid = Object.values(bookings)[0];
+                //extract number of tables already booked;
+                tablesAlreadyBooked = Object.values(bookings)[0];
             }
         } catch (ex) {
             //return if any error occurs when connecting to database;
@@ -79,7 +79,7 @@ module.exports = () => {
             return { error: ex };
         }
         //check availability;
-        if ((valid + numTables) <= maxTables) {
+        if ((tablesAlreadyBooked + numTables) <= maxTables) {
             try {
                 //if available, connect to database;
                 const results = await db.add(COLLECTION, {
@@ -137,19 +137,47 @@ module.exports = () => {
     }
 
     const updateData = async (objectID, data) => {
-        console.log(data);
         try {
             console.log('   inside update model bookings');
+            //find booking using objectID;
             const valid = await db.get(COLLECTION, { '_id': ObjectID(objectID) });
             if (valid.length > 0) {
                 const bookingDate = Object.values(valid)[0].date;
-                const date = new Date();
-                currentDate = date.getUTCDate() + "-" + (date.getMonth() + 1) + "-" + date.getFullYear();
+                let currentDate = new Date();
+                currentDate = currentDate.getUTCDate() + "-" + (currentDate.getMonth() + 1) + "-" + currentDate.getFullYear();
                 //compare booking date and current date;
                 if (currentDate === bookingDate) {
                     //return if booking is at current date; 
                     return -1;
                 } else {
+                    if ((data.hasOwnProperty('date')) && (data.hasOwnProperty('time'))) {
+                        const date = data['date']; //date to be updated;
+                        const time = data['time']; //time to be updated;
+                        const numTables = data['numTables']; //number of tables to be updated;
+                        let tablesAlreadyBooked = Number(); //number of tables already booked;
+                        let booking;
+                        try {
+                            //check if spot has already any bookings;
+                            booking = await db.findBookings(date, time);
+                        } catch (ex) {
+                            //return if any error occurs when connecting to database;
+                            console.log("=== Exception bookings::update/find");
+                            return { error: ex };
+                        }
+                        //check bookings;
+                        if (Object.keys(booking).length <= 0) {
+                            //set tables booked as '0' if no booking is found;
+                            tablesAlreadyBooked = 0;
+                        } else {
+                            //extract number of tables booked;
+                            tablesAlreadyBooked = Object.values(booking)[0];
+                        }
+                        //check availability
+                        if ((tablesAlreadyBooked + numTables) >= maxTables) {
+                            //return if fully booked;
+                            return 0;
+                        }
+                    }
                     //update if more than 1 day of booking;
                     try {
                         const filter = { '_id': ObjectID(objectID) };

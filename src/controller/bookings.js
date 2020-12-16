@@ -1,3 +1,5 @@
+const { ObjectID } = require('mongodb');
+
 const bookings = require('../model/bookingModel')();
 
 module.exports = () => {
@@ -63,8 +65,8 @@ module.exports = () => {
     const postController = async (req, res) => {
         //collect client information;
         let { name, email, phone, time, number } = req.body;
-        let numTables = Number(0); //set number of tables as an integer;
-        let numPeople = Number(0); //set number of people as an integer;
+        let numTables = Number(); //set number of tables as an integer;
+        let numPeople = Number(); //set number of people as an integer;
         let date = new Date(req.body.date); //convert date to Date format;
         //validate entries;
         if (!name) {
@@ -92,9 +94,13 @@ module.exports = () => {
             return res.send(`Error: date is missing.`); //return if no date is informed;
         } else {
             if (!isNaN(date.getDay())) { //check if date format is valid;
+                const currentDate = new Date ();
                 if (date.getDay() == 2) { //check day of the week;
                     //return if restaurant is closed on the booking day;
                     return res.send(`Restaurant is not open on Tuesdays.`);
+                } else if (currentDate > date) {
+                    //return if booking day is on the past;
+                    return res.send(`Error: Date not valid.`);
                 } else {
                     //if valide date and day, convert date to DD/MM/YYYY format;
                     date = date.getUTCDate() + "-" + (date.getMonth() + 1) + "-" + date.getFullYear();
@@ -119,7 +125,6 @@ module.exports = () => {
             numPeople = parseInt(number); //convert number informed to Integer;
             //calculate the number of tables needed (round number upward);
             numTables = Math.ceil(numPeople / 4);
-
             if (!numTables) {
                 //return if number informed is not a valid integer;
                 console.log("=== Exception bookings::number");
@@ -149,8 +154,18 @@ module.exports = () => {
     };
 
     const deleteController = async (req, res) => {
+        const id = req.params.objectID;
+        let objectID;
         try {
-            const objectID = req.params.objectID;
+            if (new ObjectID(id).toHexString() === id) {
+                objectID = id;
+            }
+        } catch (ex) {
+            //return if any error occurs;
+            console.log("=== Exception bookings::delete/objectID");
+            return res.send(`Error: ObjectID is not valid.`);
+        }
+        try {
             const results = await bookings.deleteData(objectID);
             //check result;
             if (results != null && results != -1) {
@@ -171,26 +186,87 @@ module.exports = () => {
     };
 
     const updateController = async (req, res) => {
-        const objectID = req.params.objectID;
-        const data = req.body;
-        if (!data) {
+        const id = req.params.objectID;
+        let { date, time, number } = req.body;
+        let objectID;
+        let data = {};
+        //check if the ObjectID passed is valid;
+        try {
+            if (new ObjectID(id).toHexString() === id) {
+                //if valid, assign to the objectID variable;
+                objectID = id;
+            }
+        } catch (ex) {
+            //return if objectID is not valid;
+            return res.send(`Error: ObjectID is not valid.`);
+        }
+        if (!date && !time && !number) {
+            //return if no valid information is passed;
             return res.send(`Error: inform item(date, time or number of people) to be updated.`);
         } else {
+            if (date && time) { //routine if date and time are passed;
+                const currentDate = new Date();
+                let newDate = new Date(date);
+                if (!isNaN(newDate.getDay())) { //check if date format is valid;
+                    if (newDate.getDay() == 2) { //check day of the week;
+                        //return if restaurant is closed on the booking day;
+                        return res.send(`Restaurant is not open on Tuesdays.`);
+                    } else if (currentDate > newDate) {
+                        //return if booking day is on the past;
+                        return res.send(`Error: Date not valid.`);
+                    } else {
+                        //if valide date and day, convert date to DD/MM/YYYY format;
+                        date = newDate.getUTCDate() + "-" + (newDate.getMonth() + 1) + "-" + newDate.getFullYear();
+                        //assing date to object data;
+                        data['date'] = date;
+                    }
+                } else {
+                    //return if date format informed is not valid;
+                    return res.send(`Error: date format must be YYYY-MM-DD.`);
+                }
+                //check if time informed is available for booking;
+                if (time != 16 && time != 18 && time != 20) {
+                    return res.send(`Bookings are only available at 16h, 18h and 20h.`)
+                } else {
+                    //assing time to object data;
+                    data['time'] = time;
+                }
+            } else if ((!date && time) || (date && !time)) {
+                return res.send('Error: please inform date and time.');
+            }
+            if (number) {
+                let numPeople = Number();
+                let numTables = Number();
+                numPeople = parseInt(number); //convert number informed to Integer;
+                //calculate the number of tables needed (round number upward);
+                numTables = Math.ceil(numPeople / 4);
+                if (!numTables) {
+                    //return if number informed is not a valid integer;
+                    console.log("=== Exception bookings::number");
+                    return res.send('Error: number is not a valid integer');
+                } else {
+                    data['numPeople'] = numPeople;
+                    data['numTables'] = numTables;
+                }
+            }
             try {
                 const results = await bookings.updateData(objectID, data);
                 //check result;
-                if (results != null && results != -1) {
+                if (results != null && results != -1 && results != 0) {
                     //return if date is available;
                     res.end(`Booking updated successfully`);
                 } else if (results == -1) {
                     //return if booking is at current date;
                     res.end(`Error: please contact the restaurant to update booking.`);
-                } else {
+                } else if (results == 0) {
+                    //return if date is not available;
+                    res.end(`Error: spot is fully booked.`);
+                }else {
                     //return if date is not available;
                     res.end(`Error: booking not found.`);
                 }
             } catch (ex) {
-                //return if any error occurs;s
+                //return if any error occurs;
                 console.log("=== Exception bookings::update");
                 return res.status(500).json({ error: ex });
             }
