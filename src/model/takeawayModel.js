@@ -1,5 +1,8 @@
 const { ObjectID } = require('mongodb');
+
+
 const db = require('../database')(); //call database;
+const mail = require('../mail')();
 const COLLECTION = 'bookings'; //name collection to database
 const maxTables = "4"; //set max number of tables available
 
@@ -23,12 +26,11 @@ module.exports = () => {
                 return { error: ex };
             }
         } else if (date && !time) {
-            date.setHours(0); //set initial hour;
+            date.setHours(0);
             const dayAfter = new Date(date);
-            dayAfter.setDate(date.getDate() + 1); //set final hour (24h);
+            dayAfter.setDate(date.getDate() + 1);
             let filter;
             try {
-                //select bookings between the initial and final hour;
                 filter = { 'date': { '$gte': date, '$lt': dayAfter } };
                 //get records when only date informed;
                 const bookings = await db.get(COLLECTION, filter);
@@ -50,7 +52,6 @@ module.exports = () => {
                 return { error: ex };
             }
         } else if (date && time) {
-            //set hour to the time informed;
             date.setHours(time);
             try {
                 //get records when date and time are informed;
@@ -105,7 +106,6 @@ module.exports = () => {
                     numPeople: numPeople,
                     numTables: numTables
                 });
-                //return user email;
                 return email;
             } catch (ex) {
                 //return if any error occurs when connecting to database;
@@ -121,12 +121,9 @@ module.exports = () => {
     const deleteData = async (objectID) => {
         try {
             console.log('   inside delete model bookings');
-            //find if bookinhg exists;
             const valid = await db.get(COLLECTION, { '_id': ObjectID(objectID) });
             if (valid.length > 0) {
-                //collect date of booking to be deleted;
                 const bookingDate = new Date(Object.values(valid)[0].date);
-                //collect current date;
                 const currentDate = new Date();
                 //compare booking date and current date;
                 if ((bookingDate.getDate() - currentDate.getDate()) <= 2) {
@@ -138,7 +135,6 @@ module.exports = () => {
                         //collect user email;
                         const email = Object.values(valid)[0].email;
                         const del = await db.deleteData(COLLECTION, { '_id': ObjectID(objectID) });
-                        //return user email;
                         return email;
                     } catch (ex) {
                         //return if any error occurs when connecting to database;
@@ -147,7 +143,6 @@ module.exports = () => {
                     }
                 }
             } else {
-                //return if no booking is found;
                 return null;
             }
         } catch (ex) {
@@ -163,16 +158,13 @@ module.exports = () => {
             //find booking using objectID;
             const valid = await db.get(COLLECTION, { '_id': ObjectID(objectID) });
             if (valid.length > 0) {
-                //collect date of booking to be updated;
                 const bookingDate = new Date(Object.values(valid)[0].date);
-                //collect current date;
                 const currentDate = new Date();
                 //compare booking date and current date;
                 if ((bookingDate.getDate() - currentDate.getDate()) <= 2) {
                     //return if booking is less than 2 days away; 
                     return -1;
                 } else {
-                    //check if data to be updated has date property;
                     if ((data.hasOwnProperty('date')) && (data.hasOwnProperty('time'))) {
                         const date = data['date']; //date to be updated;
                         const numTables = data['numTables']; //number of tables to be updated;
@@ -204,12 +196,9 @@ module.exports = () => {
                     try {
                         //collect user email;
                         const email = Object.values(valid)[0].email;
-                        //filter the booking to be updated;
                         const filter = { '_id': ObjectID(objectID) };
-                        //set info to be updated;
                         const updateDoc = { '$set': data };
                         const put = await db.updateData(COLLECTION, filter, updateDoc);
-                        //return user email;
                         return email;
                     } catch (ex) {
                         //return if any error occurs when connecting to database;
@@ -218,7 +207,6 @@ module.exports = () => {
                     }
                 }
             } else {
-                //return if no booking is found;
                 return null;
             }
         } catch (ex) {

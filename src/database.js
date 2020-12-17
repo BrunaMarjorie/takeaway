@@ -230,7 +230,7 @@ module.exports = () => {
     };
 
     //find previous bookings;
-    const findBookings = (date, time) => {
+    const findBookings = (query = {}) => {
         return new Promise((resolve, reject) => {
             MongoClient.connect(uri, MONGO_OPTIONS, (err, client) => {
                 if (err) {
@@ -239,15 +239,6 @@ module.exports = () => {
                 } else {
                     const db = client.db(DB_NAME);
                     const collection = db.collection('bookings');
-                    let query;
-                    //check if time is informed;
-                    if (!time) {
-                        //query if time is null;
-                        query = { 'date': date };
-                    } else {
-                        //query if time is informed;
-                        query = { 'date': date, 'time': time };
-                    }
                     collection.find(query).project({ 'numTables': 1, 'numPeople': 1, '_id': 0 }).toArray((err, docs) => {
                         if (err) {
                             console.log("=== findBookings::collection.find");
