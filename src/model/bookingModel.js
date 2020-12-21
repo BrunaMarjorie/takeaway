@@ -121,7 +121,7 @@ module.exports = () => {
     const deleteData = async (objectID) => {
         try {
             console.log('   inside delete model bookings');
-            //find if bookinhg exists;
+            //find if booking exists;
             const valid = await db.get(COLLECTION, { '_id': ObjectID(objectID) });
             if (valid.length > 0) {
                 //collect date of booking to be deleted;

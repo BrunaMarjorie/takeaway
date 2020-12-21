@@ -1,144 +1,69 @@
-const { ObjectID } = require('mongodb');
-
+const { ObjectID, Double } = require('mongodb');
+const { use } = require('../routes');
 
 const db = require('../database')(); //call database;
 const mail = require('../mail')();
-const COLLECTION = 'bookings'; //name collection to database
-const maxTables = "4"; //set max number of tables available
+const COLLECTION = 'takeaway'; //name collection to database;
 
 
 module.exports = () => {
 
-    const get = async (date = null, time = null) => {
-        console.log('   inside model bookings');
-        if (!date && !time) {
-            try {
-                //get records when no date or time is informed;
-                const bookings = await db.get(COLLECTION);
-                if (bookings.length === 0) {
-                    return null;
-                } else {
-                    return { bookingsList: bookings };
-                }
-            } catch (ex) {
-                //return if any error occurs when connecting to database;
-                console.log("=== Exception bookings::get");
-                return { error: ex };
+    const get = async () => {
+        console.log('   inside model takeaway');
+        try {
+            //get records when no date or time is informed;
+            const takeaway = await db.get(COLLECTION);
+            if (takeaway.length === 0) {
+                return null;
+            } else {
+                return { takeawayList: takeaway };
             }
-        } else if (date && !time) {
-            date.setHours(0);
-            const dayAfter = new Date(date);
-            dayAfter.setDate(date.getDate() + 1);
-            let filter;
-            try {
-                filter = { 'date': { '$gte': date, '$lt': dayAfter } };
-                //get records when only date informed;
-                const bookings = await db.get(COLLECTION, filter);
-                //check results;           
-                if (bookings.length != 0) {
-                    //extract number of tables booked;
-                    let tables = Object.values(await db.findBookings(filter))[0];
-                    //extract number of people booked;
-                    let people = Object.values(await db.findBookings(filter))[1];
-                    //return if date has bookings;  
-                    return { tables, people, bookings };
-                } else {
-                    //return if no booking is found;
-                    return null;
-                }
-            } catch (ex) {
-                //return if any error occurs when connecting to database;
-                console.log("=== Exception bookings::get{date}");
-                return { error: ex };
-            }
-        } else if (date && time) {
-            date.setHours(time);
-            try {
-                //get records when date and time are informed;
-                const bookings = await db.get(COLLECTION, { date });
-                //check results;          
-                if (bookings.length != 0) {
-                    //extract number of tables booked;
-                    let tables = Object.values(await db.findBookings({ date }))[0];
-                    //extract number of people booked;
-                    let people = Object.values(await db.findBookings({ date }))[1];
-                    //return if date has bookings;  
-                    return { tables, people, bookings };
-                } else {
-                    //return if no booking is found;
-                    return null;
-                }
-            } catch (ex) {
-                //return if any error occurs when connecting to database;
-                console.log("=== Exception bookings::get{date, time}");
-                return { error: ex };
-            }
+        } catch (ex) {
+            //return if any error occurs when connecting to database;
+            console.log("=== Exception takeaway::get");
+            return { error: ex };
         }
     }
 
-    const add = async (name, email, phone, date, numPeople, numTables) => {
-        let tablesAlreadyBooked = Number(); //number of tables already booked;
-        let bookings;
+    const add = async (userID, order, comment, total, status, time, paid) => {
+        console.log('  inside post takeaway');
         try {
-            //check if spot has already any bookings;
-            bookings = await db.findBookings({ date });
+            const results = await db.add(COLLECTION, {
+                userID: userID,
+                order: order,
+                comment: comment,
+                total: total,
+                status: status,
+                time: time,
+                paid: paid
+            });
+            return results.result;
         } catch (ex) {
             //return if any error occurs when connecting to database;
-            console.log("=== Exception bookings::find");
+            console.log("=== Exception takeaway::add");
             return { error: ex };
-        }
-        if (Object.keys(bookings).length <= 0) {
-            //set tables booked as '0' if no booking is found;
-            tablesAlreadyBooked = 0;
-        } else {
-            //extract number of tables already booked;
-            tablesAlreadyBooked = Object.values(bookings)[0];
-        }
-        //check availability;
-        if ((tablesAlreadyBooked + numTables) <= maxTables) {
-            try {
-                //if available, connect to database;
-                const results = await db.add(COLLECTION, {
-                    name: name,
-                    email: email,
-                    phoneNumber: phone,
-                    date: date,
-                    numPeople: numPeople,
-                    numTables: numTables
-                });
-                return email;
-            } catch (ex) {
-                //return if any error occurs when connecting to database;
-                console.log("=== Exception bookings::add");
-                return { error: ex };
-            }
-        } else {
-            //return null if spot is not available;
-            return null;
         }
     };
 
     const deleteData = async (objectID) => {
+        let userStatus;
         try {
-            console.log('   inside delete model bookings');
+            console.log('   inside delete model takeaway');
             const valid = await db.get(COLLECTION, { '_id': ObjectID(objectID) });
+            usertype = 'admin';
             if (valid.length > 0) {
-                const bookingDate = new Date(Object.values(valid)[0].date);
-                const currentDate = new Date();
-                //compare booking date and current date;
-                if ((bookingDate.getDate() - currentDate.getDate()) <= 2) {
-                    //return if booking is less than 2 days away; 
+                //userStatus === valid['status];
+                if (usertype !== 'admin') {
+                    //return if user is not an admin; 
                     return -1;
                 } else {
-                    //delete if more than 1 day of booking;
+                    //delete only if user is a staff;
                     try {
-                        //collect user email;
-                        const email = Object.values(valid)[0].email;
                         const del = await db.deleteData(COLLECTION, { '_id': ObjectID(objectID) });
-                        return email;
+                        return del;
                     } catch (ex) {
                         //return if any error occurs when connecting to database;
-                        console.log("=== Exception bookings model::delete");
+                        console.log("=== Exception takeaway model::delete");
                         return { error: ex };
                     }
                 }
@@ -147,71 +72,35 @@ module.exports = () => {
             }
         } catch (ex) {
             //return if any error occurs when connecting to database;
-            console.log("=== Exception bookings::delete/find");
+            console.log("=== Exception takeaway::delete/find");
             return { error: ex };
         }
     }
 
     const updateData = async (objectID, data) => {
         try {
-            console.log('   inside update model bookings');
+            console.log('   inside update model takeaway');
             //find booking using objectID;
             const valid = await db.get(COLLECTION, { '_id': ObjectID(objectID) });
             if (valid.length > 0) {
-                const bookingDate = new Date(Object.values(valid)[0].date);
-                const currentDate = new Date();
-                //compare booking date and current date;
-                if ((bookingDate.getDate() - currentDate.getDate()) <= 2) {
-                    //return if booking is less than 2 days away; 
-                    return -1;
-                } else {
-                    if ((data.hasOwnProperty('date')) && (data.hasOwnProperty('time'))) {
-                        const date = data['date']; //date to be updated;
-                        const numTables = data['numTables']; //number of tables to be updated;
-                        let tablesAlreadyBooked = Number(); //number of tables already booked;
-                        let booking;
-                        try {
-                            //check if spot has already any bookings;
-                            booking = await db.findBookings({ date });
-                        } catch (ex) {
-                            //return if any error occurs when connecting to database;
-                            console.log("=== Exception bookings::update/find");
-                            return { error: ex };
-                        }
-                        //check bookings;
-                        if (Object.keys(booking).length <= 0) {
-                            //set tables booked as '0' if no booking is found;
-                            tablesAlreadyBooked = 0;
-                        } else {
-                            //extract number of tables booked;
-                            tablesAlreadyBooked = Object.values(booking)[0];
-                        }
-                        //check availability
-                        if ((tablesAlreadyBooked + numTables) >= maxTables) {
-                            //return if fully booked;
-                            return 0;
-                        }
-                    }
-                    //update if more than 1 day of booking;
-                    try {
-                        //collect user email;
-                        const email = Object.values(valid)[0].email;
-                        const filter = { '_id': ObjectID(objectID) };
-                        const updateDoc = { '$set': data };
-                        const put = await db.updateData(COLLECTION, filter, updateDoc);
-                        return email;
-                    } catch (ex) {
-                        //return if any error occurs when connecting to database;
-                        console.log("=== Exception bookings::update");
-                        return { error: ex };
-                    }
-                }
-            } else {
                 return null;
+            } else {
+                try {
+                    //collect user email;
+                    const email = Object.values(valid)[0].email;
+                    const filter = { '_id': ObjectID(objectID) };
+                    const updateDoc = { '$set': data };
+                    const put = await db.updateData(COLLECTION, filter, updateDoc);
+                    return email;
+                } catch (ex) {
+                    //return if any error occurs when connecting to database;
+                    console.log("=== Exception takeaway::update");
+                    return { error: ex };
+                }
             }
         } catch (ex) {
             //return if any error occurs when connecting to database;
-            console.log("=== Exception bookings::update/find");
+            console.log("=== Exception takeaway::update/find");
             return { error: ex };
         }
     }

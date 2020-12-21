@@ -1,7 +1,7 @@
 const { ObjectID } = require('mongodb');
 const mail = require('../mail')();
 const bookings = require('../model/bookingModel')();
-const validations = require('../auxiliar/validations')();
+const validations = require('../validations')();
 
 module.exports = () => {
 
@@ -39,7 +39,7 @@ module.exports = () => {
             }
         } catch (ex) {
             //return if any error occurs;
-            console.log("=== Exception projects::getByDate.");
+            console.log("=== Exception bookings::getByDate.");
             return res.status(500).json({ error: ex })
         }
     };
@@ -86,27 +86,33 @@ module.exports = () => {
             if (!mailformat.test(String(email).toLowerCase())) {
                 return res.send(`Error: email format not valid.`); //return if email format is not valid;
             }
-        }
-        if (!phone) {
-            return res.send(`Error: phone is missing.`); //return if no phone number is informed;
-        } else {
-            //validate phone number format;
-            phone = phone.replace(/[^0-9]/g, '');
-            if (phone.length != 10) {
-                //return if phone number format is not valid;
-                return res.send(`Error: phone number format not valid.`);
+            if (!phone) {
+                return res.send(`Error: phone number is missing.`); //return if no phone number is informed;
+            } else {
+                //validate phone number format;
+                phone = phone.replace(/[^0-9]/g, '');
+                if (phone.length != 10) {
+                    //return if phone number format is not valid;
+                    return res.send(`Error: phone number format not valid.`);
+                }
             }
-        } if (!date || !time) {
+        }
+        if (!date || !time) {
             return res.send(`Error: date and/or time is missing.`); //return if no date ot time is informed;
         } else {
+            //validate date format;
             const results = await validations.dateValidation(date, time);
             if (results === -1) {
+                //return if date is a Tuesday;
                 return res.send(`Restaurant is not open on Tuesdays.`);
             } else if (results === 0) {
+                //return if date is in the past;
                 return res.send(`Error: Date not valid.`);
             } else if (results === null) {
+                //return if date format is not valid;
                 return res.send(`Error: date format must be YYYY-MM-DD.`);
             } else if (results === 1) {
+                //return if time is not available for bookings;
                 return res.send(`Bookings are only available at 16h, 18h and 20h.`);
             } else {
                 //assign date to the new format;
@@ -117,10 +123,13 @@ module.exports = () => {
             //return if no number of people is informed;
             return res.send(`Error: number of people is missing.`);
         } else {
+            //validate number of people;
             const results = await validations.validPeopleNumber(number);
             if (results == null) {
+                //return if number is not an integer;
                 return res.send('Error: number is not a valid integer');
             } else {
+                //if valid number, collect data to be posted;
                 numPeople = Object.values(results)[0];
                 numTables = Object.values(results)[1];
             }
@@ -153,6 +162,7 @@ module.exports = () => {
         const id = req.params.objectID;
         let objectID;
         try {
+            //check if id collected is a valid ObjectID;
             if (new ObjectID(id).toHexString() === id) {
                 objectID = id;
             }
@@ -173,7 +183,7 @@ module.exports = () => {
                 //return if booking is at current date;
                 return res.end(`Error: please contact the restaurant to cancel booking.`);
             } else {
-                //return if date is not available;
+                //return if booking is not found;
                 return res.end(`Error: booking not found.`);
             }
         } catch (ex) {
@@ -188,8 +198,8 @@ module.exports = () => {
         let { date, time, number } = req.body;
         let objectID;
         let data = {};
-        //check if the ObjectID passed is valid;
         try {
+            //check if the ObjectID passed is valid;
             if (new ObjectID(id).toHexString() === id) {
                 //if valid, assign to the objectID variable;
                 objectID = id;
@@ -203,17 +213,24 @@ module.exports = () => {
             return res.send(`Error: inform item(date, time or number of people) to be updated.`);
         } else {
             if (date && time) { //routine if date and time are passed;
+                //convert  date passed in date format;
                 let newDate = new Date(date);
+                //validate date;
                 const results = await validations.dateValidation(newDate, time);
                 if (results === -1) {
+                    //return if date is a Tuesday;
                     return res.send(`Restaurant is not open on Tuesdays.`);
                 } else if (results === 0) {
+                    // return if date is in the past;
                     return res.send(`Error: Date not valid.`);
                 } else if (results === null) {
+                    //return if date format is not valid;
                     return res.send(`Error: date format must be YYYY-MM-DD.`);
                 } else if (results === 1) {
+                    //return if time is not available for bookings;
                     return res.send(`Bookings are only available at 16h, 18h and 20h.`);
                 } else {
+                    //assign values to data to be updated;
                     data['date'] = date;
                     data['time'] = time;
                 }
@@ -221,10 +238,13 @@ module.exports = () => {
                 return res.send('Error: please inform date and time.');
             }
             if (number) {
+                //validate number of people;
                 const results = await validations.validPeopleNumber(number);
                 if (results == null) {
+                    //return if number is not an integer;
                     return res.send('Error: number is not a valid integer');
                 } else {
+                    //assign values to data to be updated;
                     data['numPeople'] = Object.values(results)[0];
                     data['numTables'] = Object.values(results)[1];
                 }
@@ -254,7 +274,6 @@ module.exports = () => {
             }
         }
     };
-
 
     return {
         getController,
