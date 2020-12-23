@@ -76,11 +76,21 @@ module.exports = () => {
         //validate entries;
         if (!userID) {
             return res.send(`Error: user is missing.`); //return if no userID is informed;
+        } else {
+            const user = await validations.userValidation(userID);
+            if (user === null){
+                return res.send(`Error: userID is not valid.`);
+            } else if (user === -1) {
+                return res.send(`Error: user not found.`);
+            } else {
+                userName = user[0].name;
+                email = user[0].email;
+            }
         }
         if (!order) {
             return res.send(`Error: order is missing.`); //return if no order is informed;
         } else {
-            const valid = await validations.validateOrder(order);
+            const valid = await validations.orderValidation(order);
             if (valid == -1) {
                 //return if no order is not valid;
                 return res.send(`Error: order must have pairs of dish and quantity.`);
@@ -174,7 +184,7 @@ module.exports = () => {
             return res.send(`Error: inform item to be updated.`);
         } else {
             if (order) { //routine if order is passed;
-                const total = await validations.validateOrder(order);
+                const total = await validations.orderValidation(order);
                 data['order'] = order;
                 data['total'] = total;
             }
@@ -188,7 +198,7 @@ module.exports = () => {
             if (status) {
                 data['status'] = status;
             }
-            if (paid){
+            if (paid) {
                 data['paid'] = paid;
             }
             try {

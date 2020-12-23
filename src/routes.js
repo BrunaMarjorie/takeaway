@@ -2,6 +2,7 @@ const bookings = require('./controller/bookingsController')();
 const menu = require('./controller/menuController')();
 const takeaway = require('./controller/takeawayController')();
 const users = require('./controller/userController')();
+const session = require('./session')();
 
 module.exports = (function () {
 
@@ -12,18 +13,24 @@ module.exports = (function () {
 
     });
 
+    //login route; 
+    routes.post('/users/register', users.postController);
+    routes.post('/users/login', session.loginController);
+    routes.post('/users/logout', session.logoutController);
+
+
     //users routes;
-    routes.get('/users', users.getController);
+    routes.get('/users', session.isAuthenticated, users.getController);
     routes.get('/users/:email', users.getByEmail);
-    routes.post('/users', users.postController);
     routes.delete('/users/:objectID', users.deleteController);
+    routes.put('/users/:objectID', users.updateController);
 
 
     //bookings routes;
     routes.get('/bookings', bookings.getController);
     routes.get('/bookings/:date', bookings.getByDate);
     routes.get('/bookings/:date/:time', bookings.getByDateAndTime);
-    routes.post('/bookings', bookings.postController);
+    routes.post('/bookings', session.isAuthenticated, bookings.postController);
     routes.delete('/bookings/:objectID', bookings.deleteController);
     routes.put('/bookings/:objectID', bookings.updateController);
 

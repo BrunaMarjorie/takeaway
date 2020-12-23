@@ -75,7 +75,7 @@ module.exports = () => {
         }
     }
 
-    const add = async (name, email, phone, date, numPeople, numTables) => {
+    const add = async (userID, date, numPeople, numTables) => {
         let tablesAlreadyBooked = Number(); //number of tables already booked;
         let bookings;
         try {
@@ -98,15 +98,13 @@ module.exports = () => {
             try {
                 //if available, connect to database;
                 const results = await db.add(COLLECTION, {
-                    name: name,
-                    email: email,
-                    phoneNumber: phone,
+                    userID: userID,
                     date: date,
                     numPeople: numPeople,
                     numTables: numTables
                 });
                 //return user email;
-                return email;
+                return results;
             } catch (ex) {
                 //return if any error occurs when connecting to database;
                 console.log("=== Exception bookings::add");

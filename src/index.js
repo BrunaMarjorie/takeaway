@@ -2,6 +2,7 @@ const express = require('express'); //create express variable;
 const bodyParser = require('body-parser'); //create variable to read client entries;
 const router = require('./routes'); //create routes;
 
+
 const hostname = '0.0.0.0'; 
 const port = process.env.PORT || 3000;
 

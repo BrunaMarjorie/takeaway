@@ -70,33 +70,13 @@ module.exports = () => {
 
     const postController = async (req, res) => {
         //collect client information;
-        let { name, email, phone, time, number } = req.body;
+        let { time, number } = req.body;
         let numTables = Number(); //set number of tables as an integer;
         let numPeople = Number(); //set number of people as an integer;
         let date = new Date(req.body.date); //convert date to Date format;
+        const userID = req.user._id;
+        const email = req.user.email;
         //validate entries;
-        if (!name) {
-            return res.send(`Error: name is missing.`); //return if no name is informed;
-        }
-        if (!email) {
-            return res.send(`Error: email is missing.`); //return if no email is informed;
-        } else {
-            //validate email format;
-            const mailformat = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
-            if (!mailformat.test(String(email).toLowerCase())) {
-                return res.send(`Error: email format not valid.`); //return if email format is not valid;
-            }
-            if (!phone) {
-                return res.send(`Error: phone number is missing.`); //return if no phone number is informed;
-            } else {
-                //validate phone number format;
-                phone = phone.replace(/[^0-9]/g, '');
-                if (phone.length != 10) {
-                    //return if phone number format is not valid;
-                    return res.send(`Error: phone number format not valid.`);
-                }
-            }
-        }
         if (!date || !time) {
             return res.send(`Error: date and/or time is missing.`); //return if no date ot time is informed;
         } else {
@@ -135,17 +115,17 @@ module.exports = () => {
             }
         }
         //method starts only after all the items are passed;
-        if (name && email && phone && date && time && numPeople && numTables) {
+        if (userID && date && time && numPeople && numTables) {
             console.log('  inside post bookings');
             try {
                 //call bookingModel function;
-                const results = await bookings.add(name, email, phone, date, numPeople, numTables);
+                const results = await bookings.add(userID, date, numPeople, numTables);
                 //check result;
                 if (results != null) {
                     //send notification;
-                    mail.sendEmail('created', results);
+                    mail.sendEmail('created', email);
                     //return if date is available;
-                    return res.end(`Booking successfull: ${name}, on ${date}`);
+                    return res.end(`Booking successfull: ${userName}, on ${date}`);
                 } else {
                     //return if date is not available;
                     return res.end(`Error: bookings not available for ${numPeople} people.`);
@@ -264,7 +244,7 @@ module.exports = () => {
                     //return if date is not available;
                     return res.end(`Error: bookings not available for ${data['numPeople']} people.`);
                 } else {
-                    //return if date is not available;
+                    //return if booking is not in the database;
                     return res.end(`Error: booking not found.`);
                 }
             } catch (ex) {

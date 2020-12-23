@@ -228,36 +228,7 @@ module.exports = () => {
         });
     };
 
-    //find only for the users' keys;
-    const findKeys = () => {
-        return new Promise((resolve, reject) => {
-            MongoClient.connect(uri, MONGO_OPTIONS, (err, client) => {
-                if (err) {
-                    console.log(err);
-                    return reject("=== findKeys::MongoClient.connect");
-                } else {
-                    const db = client.db(DB_NAME);
-                    const collection = db.collection('users');
-                    collection.find({}).project({ 'key': 1, '_id': 0, 'email': 1 }).toArray((err, docs) => {
-                        if (err) {
-                            console.log("=== findKeys::collection.find");
-                            console.log(err);
-                            return reject(err);
-                        } else {
-                            if (docs == null) {
-                                resolve(null);
-                                client.close();
-                            } else {
-                                resolve(docs);
-                                client.close();
-                            }
-                        }
-                    });
-                }
-            });
-        });
-    };
-
+    
     //find previous bookings;
     const findBookings = (query = {}) => {
         return new Promise((resolve, reject) => {
@@ -329,7 +300,6 @@ module.exports = () => {
         add,
         count,
         find,
-        findKeys,
         aggregate,
         updateData,
         checkDueDate,

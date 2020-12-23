@@ -1,7 +1,6 @@
 const { ObjectID } = require('mongodb');
 const db = require('../database')();
 const COLLECTION = 'users';
-const bcrypt = require('bcrypt');
 
 module.exports = () => {
     const get = async (email = null) => {
@@ -31,35 +30,7 @@ module.exports = () => {
         }
     }
 
-    const getByKey = async (userEmail, key) => {
-        console.log('   inside users password');
-        if (!userEmail || !key) {
-            console.log(" Error: Missing user email and/or password.");
-            return null;
-        } else {
-            try {
-                //look up and match user key;        
-                const users = await db.findKeys();
-                for (i in users) {
-                    if (bcrypt.compareSync(key, users[i].key)) {
-                        const user = users[i].email;
-                        if (user === userEmail){
-                            return user;
-                        } else {
-                            return -1;
-                        }
-                    }
-                }
-                console.log(" Error: User not found.");
-                return null;
-            } catch (ex) {
-                console.log("=== Exception user::getByKey");
-                return { error: ex };
-            }
-        }
-    }
-
-    const add = async (name, email, phoneNumber, usertype, password) => {
+    const add = async (firstName, lastName, email, address, phoneNumber, usertype, password) => {
         console.log('   inside users model');
         let valid;
         try {
@@ -72,8 +43,10 @@ module.exports = () => {
         if (!valid) {
             try {
                 const results = await db.add(COLLECTION, {
-                    name: name,
+                    firstName: firstName,
+                    lastName: lastName,
                     email: email,
+                    address: address,
                     phoneNumber: phoneNumber,
                     usertype: usertype,
                     password: password,
@@ -91,35 +64,67 @@ module.exports = () => {
     const deleteData = async (objectID) => {
         console.log("id: " + objectID);
         try {
-           console.log('   inside delete model users');
-           //find if user exists;
-           const valid = await db.get(COLLECTION, { '_id': ObjectID(objectID) });
-           if (valid.length > 0) {
-              //delete routine;
-              try {
-                 const del = await db.deleteData(COLLECTION, { '_id': ObjectID(objectID) });
-                 return del;
-              } catch (ex) {
-                 //return if any error occurs when connecting to database;
-                 console.log("=== Exception users model::delete");
-                 return { error: ex };
-              }
-           } else {
-              //return if user is not found;
-              return null;
-           }
+            console.log('   inside delete model users');
+            //find if user exists;
+            const valid = await db.get(COLLECTION, { '_id': ObjectID(objectID) });
+            if (valid.length > 0) {
+                //delete routine;
+                try {
+                    const del = await db.deleteData(COLLECTION, { '_id': ObjectID(objectID) });
+                    return del;
+                } catch (ex) {
+                    //return if any error occurs when connecting to database;
+                    console.log("=== Exception users model::delete");
+                    return { error: ex };
+                }
+            } else {
+                //return if user is not found;
+                return null;
+            }
         } catch (ex) {
-           //return if any error occurs when connecting to database;
-           console.log("=== Exception users::delete/find");
-           return { error: ex };
+            //return if any error occurs when connecting to database;
+            console.log("=== Exception users::delete/find");
+            return { error: ex };
         }
-     }
-  
+    }
+
+    const updateData = async (objectID, data) => {
+        try {
+            console.log('   inside update model users');
+            //find user using objectID;
+            const valid = await db.get(COLLECTION, { '_id': ObjectID(objectID) });
+            if (valid.length > 0) {
+                //update if more than 1 day of booking;
+                try {
+                    //collect user email;
+                    const email = Object.values(valid)[0].email;
+                    //filter the booking to be updated;
+                    const filter = { '_id': ObjectID(objectID) };
+                    //set info to be updated;
+                    const updateDoc = { '$set': data };
+                    const put = await db.updateData(COLLECTION, filter, updateDoc);
+                    //return user email;
+                    return email;
+                } catch (ex) {
+                    //return if any error occurs when connecting to database;
+                    console.log("=== Exception users::update");
+                    return { error: ex };
+                }
+            } else {
+                //return if no user is found;
+                return null;
+            }
+        } catch (ex) {
+            //return if any error occurs when connecting to database;
+            console.log("=== Exception users::update/find");
+            return { error: ex };
+        }
+    }
 
     return {
         get,
         add,
-        getByKey,
         deleteData,
+        updateData,
     }
 }

@@ -46,7 +46,7 @@ module.exports = () => {
         return validNUmber;
     }
 
-    const validateOrder = async (order) => {
+    const orderValidation = async (order) => {
         let id;
         let objectID;
         let orderTotalPrice = Number();
@@ -67,15 +67,16 @@ module.exports = () => {
                 let valid = await db.get('menu', { '_id': ObjectID(objectID) });
                 let quantity = (order[i].quantity);
                 let price = (Object.values(valid)[0].price);
-                orderTotalPrice +=  (quantity * price);
+                orderTotalPrice += (quantity * price);
             }
         }
         return orderTotalPrice;
     }
 
+    
     return {
         dateValidation,
         validPeopleNumber,
-        validateOrder,
+        orderValidation,
     }
 }
