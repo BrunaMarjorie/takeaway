@@ -32,9 +32,6 @@ module.exports = () => {
 
     }
 
-
-
-
     const count = (collectionName, query = {}) => {
         return new Promise((resolve, reject) => {
             MongoClient.connect(uri, MONGO_OPTIONS, (err, client) => {
@@ -131,49 +128,6 @@ module.exports = () => {
         });
     };
 
-    //check issues due date and change their status if needed;
-    const checkDueDate = () => {
-        return new Promise((resolve, reject) => {
-            MongoClient.connect(uri, MONGO_OPTIONS, (err, client) => {
-                if (err) {
-                    console.log(err);
-                    return reject("=== find::MongoClient.connect");
-                } else {
-                    const db = client.db(DB_NAME);
-                    const collection = db.collection('issues');
-                    //collecting current date;
-                    const currentDate = new Date();
-                    collection.find({ 'dueDate': { $lte: currentDate } }).toArray((err, docs) => {
-                        if (err) {
-                            console.log("=== checkDueDate::collection.find");
-                            console.log(err);
-                            return reject(err);
-                        } else {
-                            var user = [];
-                            for (i = 0; i < docs.length; i++) {
-                                if (docs[i].status === 'open') {
-                                    user.push(docs[i].issueNumber);
-                                }
-                            }
-                            collection.updateMany({ 'dueDate': { $lte: currentDate } }, { $set: { 'status': 'closed' } }, (err, result) => {
-                                if (err) {
-                                    console.log("=== checkDueDate::collection.updateMany");
-                                    console.log(err);
-                                    return reject(err);
-                                } else {
-                                    console.log("status updated.");
-                                    console.log(user);
-                                    resolve(user);
-                                    client.close();
-                                }
-                            });
-                        }
-                    });
-                }
-            });
-        });
-    }
-
     const aggregate = (collectionName, pipeline = []) => {
         return new Promise((resolve, reject) => {
             MongoClient.connect(uri, MONGO_OPTIONS, (err, client) => {
@@ -199,7 +153,7 @@ module.exports = () => {
     };
 
     //find any general item;
-    const find = (collectionName, query = {}) => {
+    const find = (collectionName, query, project) => {
         return new Promise((resolve, reject) => {
             MongoClient.connect(uri, MONGO_OPTIONS, (err, client) => {
                 if (err) {
@@ -208,7 +162,7 @@ module.exports = () => {
                 } else {
                     const db = client.db(DB_NAME);
                     const collection = db.collection(collectionName);
-                    collection.find(query).toArray((err, docs) => {
+                    collection.find(query).project(project).toArray((err, docs) => {
                         if (err) {
                             console.log("=== find::collection.find{query}");
                             console.log(err);
@@ -218,7 +172,7 @@ module.exports = () => {
                                 resolve(null);
                                 client.close();
                             } else {
-                                resolve(docs[0]._id);
+                                resolve(docs);
                                 client.close();
                             }
                         }
@@ -293,6 +247,29 @@ module.exports = () => {
         });
     };
 
+    const findLastOrder = (collectionName, query = {}) => {
+        return new Promise((resolve, reject) => {
+            MongoClient.connect(uri, MONGO_OPTIONS, (err, client) => {
+                if (err) {
+                    console.log(err);
+                    return reject("=== get::MongoClient.connect");
+                } else {
+                    const db = client.db(DB_NAME);
+                    const collection = db.collection(collectionName);
+                    collection.find(query).limit(1).sort({'_id': -1}).toArray((err, docs) => {
+                        if (err) {
+                            console.log("=== get::collection.find");
+                            console.log(err);
+                            return reject(err);
+                        } else {
+                            resolve(docs);
+                            client.close();
+                        }
+                    });
+                }
+            });
+        });
+    };
 
     return {
         createCollection,
@@ -302,8 +279,8 @@ module.exports = () => {
         find,
         aggregate,
         updateData,
-        checkDueDate,
         findBookings,
         deleteData,
+        findLastOrder
     };
 };

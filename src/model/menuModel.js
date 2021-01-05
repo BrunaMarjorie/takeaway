@@ -36,13 +36,13 @@ module.exports = () => {
             return { error: ex };
          }
       }
-
    }
 
-   const add = async (dish, ingredients, allergens, price) => {
+   const add = async (number, dish, ingredients, allergens, price) => {
       console.log('  inside post menu');
       try {
          const results = await db.add(COLLECTION, {
+            number: number,
             dish: dish,
             ingredients: ingredients,
             allergens: allergens,

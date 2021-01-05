@@ -6,71 +6,59 @@ const maxTables = "4"; //set max number of tables available
 
 module.exports = () => {
 
-    const get = async (date = null, time = null) => {
+    const get = async (userID = null, date = null) => {
         console.log('   inside model bookings');
-        if (!date && !time) {
+        let filter;
+        let project;
+        if (!date) {
             try {
-                //get records when no date or time is informed;
-                const bookings = await db.get(COLLECTION);
+                if (userID['status'] === 'costumer') {
+                    filter = { 'userID': userID['id'] }; //filter the access;    
+                } else {
+                    filter = {}; //filter the access;
+                }
+                //select information that can be accessed;
+                project = {};
+                const bookings = await db.find(COLLECTION, filter, project);
                 if (bookings.length === 0) {
                     return null;
                 } else {
-                    return { bookingsList: bookings };
+                    return bookings;
                 }
             } catch (ex) {
                 //return if any error occurs when connecting to database;
                 console.log("=== Exception bookings::get");
                 return { error: ex };
             }
-        } else if (date && !time) {
-            date.setHours(0); //set initial hour;
+        } else if (date) {
+            date.setHours(0); //set initial hour of the day;
             const dayAfter = new Date(date);
             dayAfter.setDate(date.getDate() + 1); //set final hour (24h);
-            let filter;
-            try {
-                //select bookings between the initial and final hour;
-                filter = { 'date': { '$gte': date, '$lt': dayAfter } };
-                //get records when only date informed;
-                const bookings = await db.get(COLLECTION, filter);
-                //check results;           
-                if (bookings.length != 0) {
-                    //extract number of tables booked;
-                    let tables = Object.values(await db.findBookings(filter))[0];
-                    //extract number of people booked;
-                    let people = Object.values(await db.findBookings(filter))[1];
-                    //return if date has bookings;  
-                    return { tables, people, bookings };
-                } else {
-                    //return if no booking is found;
-                    return null;
+            if (userID['status'] === 'costumer') {
+                return null; //filter the access;    
+            } else {
+                try {
+                    //select bookings between the initial and final hour;
+                    filter = { 'date': { '$gte': date, '$lt': dayAfter } };
+                    //get records when only date informed;
+                    const bookings = await db.get(COLLECTION, filter);
+                    //check results;           
+                    if (bookings.length != 0) {
+                        //extract number of tables booked;
+                        let tables = Object.values(await db.findBookings(filter))[0];
+                        //extract number of people booked;
+                        let people = Object.values(await db.findBookings(filter))[1];
+                        //return if date has bookings;  
+                        return { tables, people, bookings };
+                    } else {
+                        //return if no booking is found;
+                        return null;
+                    }
+                } catch (ex) {
+                    //return if any error occurs when connecting to database;
+                    console.log("=== Exception bookings::get{date}");
+                    return { error: ex };
                 }
-            } catch (ex) {
-                //return if any error occurs when connecting to database;
-                console.log("=== Exception bookings::get{date}");
-                return { error: ex };
-            }
-        } else if (date && time) {
-            //set hour to the time informed;
-            date.setHours(time);
-            try {
-                //get records when date and time are informed;
-                const bookings = await db.get(COLLECTION, { date });
-                //check results;          
-                if (bookings.length != 0) {
-                    //extract number of tables booked;
-                    let tables = Object.values(await db.findBookings({ date }))[0];
-                    //extract number of people booked;
-                    let people = Object.values(await db.findBookings({ date }))[1];
-                    //return if date has bookings;  
-                    return { tables, people, bookings };
-                } else {
-                    //return if no booking is found;
-                    return null;
-                }
-            } catch (ex) {
-                //return if any error occurs when connecting to database;
-                console.log("=== Exception bookings::get{date, time}");
-                return { error: ex };
             }
         }
     }

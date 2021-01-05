@@ -2,23 +2,25 @@ const { sign, verify } = require('jsonwebtoken');
 const db = require('./database')();
 const COLLECTION = 'users';
 const bcrypt = require('bcrypt');
+const { ObjectID } = require('mongodb');
+
 
 module.exports = () => {
     const userAuthentication = async (email, password) => {
+        let userID;
         console.log('   inside users password');
-        let user;
         try {
             //look up and match user key;        
             const users = await db.get(COLLECTION);
             for (i in users) {
                 if ((email === users[i].email)) {
                     if (bcrypt.compareSync(password, users[i].password)) {
-                        user = users[i];      
+                        userID = users[i]._id;
                     }
                 }
             }
-            if (user) {
-                return user;
+            if (userID) {
+                return userID;
             } else {
                 console.log(" Error: User not found.");
                 return null;
@@ -40,7 +42,7 @@ module.exports = () => {
             error: "Failed Authentication.",
         };
 
-        if (!password && !email) {
+        if (!password || !email) {
             console.log("   [%s] FAILED AUTHENTICATION -- %s, No email or password supplied",
                 new Date(), clientIp);
             FailedAuthMessage.code = "01";
@@ -62,26 +64,50 @@ module.exports = () => {
                 return res.status(401).json(FailedAuthMessage);
             }
 
-            token = sign({user: user}, process.env.TOKEN, {
-                expiresIn: '1d',
+            token = sign({ user: user }, process.env.TOKEN, {
+                expiresIn: '6h',
             });
+            try {
+                const filter = { '_id': ObjectID(user) };
+                //set info to be updated;
+                const updateDoc = { '$set': { 'token': token } };
+                const result = await db.updateData(COLLECTION, filter, updateDoc);
+            } catch (ex) {
+                //return if any error occurs;
+                console.log("=== Exception session::update");
+                return res.status(500).json({ error: ex });
+            };
         }
-        return res.send ({ user, token });
+        return res.redirect('/');
     }
 
     const isAuthenticated = async (req, res, next) => {
-        const authHeader = req.headers.authorization;
+        //const authHeader = req.headers.authorization;
 
-        if (!authHeader) {
+        const username = req.headers.email;
+
+        if (!username) {
             return res.status(401).json('No user logged in.');
         }
-
-        let [, token] = authHeader.split(' ');
-
         try {
-            const decoded = verify(token, process.env.TOKEN);
-            req.user = decoded.user;           
-            return next();
+            const user = await db.get(COLLECTION, { email: username });
+            const token = user[0].token;
+
+            if (token) {
+                try {
+                    const decoded = verify(token, process.env.TOKEN);
+                    req.user = decoded.user;
+                    return next();
+    
+                } catch (ex) {
+                    //return if any error occurs;
+                    console.log("=== Exception session::isAuthenticated.");
+                    return res.status(500).json('You must be logged in to access this page.');
+                }
+            } else {
+                return res.status(401).json('You must be logged in to access this page.');
+            }
+            
 
         } catch (ex) {
             //return if any error occurs;
@@ -91,7 +117,26 @@ module.exports = () => {
     }
 
     const logoutController = async (req, res) => {
-        req.user = null;
+        const username = req.headers.email;
+
+        if (!username) {
+            return res.status(401).json('No user logged in.');
+        }
+        try {
+
+            const user = await db.find(COLLECTION, { email: username });
+            
+            const filter = { '_id': ObjectID(user) };
+            //set info to be updated;
+            const updateDoc = { '$set': { 'token': null } };
+            const result = await db.updateData(COLLECTION, filter, updateDoc);
+
+        } catch (ex) {
+            //return if any error occurs;
+            console.log("=== Exception session::logout.");
+            return res.status(500).json({ error: ex });
+        }
+
         return res.redirect('/');
     }
 

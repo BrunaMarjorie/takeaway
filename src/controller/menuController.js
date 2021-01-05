@@ -1,5 +1,6 @@
 const { ObjectID } = require('mongodb');
 const menu = require('../model/menuModel')();
+const validations = require('../validations')();
 
 module.exports = () => {
 
@@ -20,9 +21,16 @@ module.exports = () => {
     };
 
     const postController = async (req, res) => {
+        const user = await validations.userValidation(req.user);
+        if (user['status'] !== 'admin') {
+            return res.status(401).json('Action not authorized.');
+        }
         //collect information;
-        const { dish, ingredients, allergens, price } = req.body;
+        const { number, dish, ingredients, allergens, price } = req.body;
         let validPrice = Number();
+        if (!number) {
+            return res.send(`Error: dish number is missing.`); //return if no dish number is informed;
+        }
         if (!dish) {
             return res.send(`Error: dish is missing.`); //return if no dish is informed;
         }
@@ -38,20 +46,17 @@ module.exports = () => {
             //validate price;
             const valid = Number(price);
             if (isNaN(valid)) {
-                console.log("here");
                 return res.send('Error: price is not a valid number');
             } else {
-                console.log("there");
                 validPrice = parseFloat(valid).toFixed(2);
                 const y = validPrice;
-                console.log(y);
             }
         }
         //method starts only after all the items are passed;
-        if (dish && ingredients && allergens && validPrice) {
+        if (number && dish && ingredients && allergens && validPrice) {
             try {
                 //call menuModel function;
-                const results = await menu.add(dish, ingredients, allergens, validPrice);
+                const results = await menu.add(number, dish, ingredients, allergens, validPrice);
                 //check result;
                 if (results != null) {
                     return res.end(`Menu item inserted successfull: ${dish}: ${ingredients}, allergens: ${allergens} - € ${validPrice}`);
@@ -96,7 +101,7 @@ module.exports = () => {
 
     const updateController = async (req, res) => {
         const id = req.params.objectID;
-        let { dish, ingredients, allergens, price } = req.body;
+        let { number, dish, ingredients, allergens, price } = req.body;
         let objectID;
         let data = {};
         try {
@@ -109,14 +114,17 @@ module.exports = () => {
             //return if objectID is not valid;
             return res.send(`Error: ObjectID is not valid.`);
         }
-        if (!dish && !ingredients && !allergens && !price) {
+        if (!number || !dish || !ingredients || !allergens || !price) {
             //return if no valid information is passed;
-            return res.send(`Error: inform item(dish, ingredients or price) to be updated.`);
+            return res.send(`Error: inform item(number, dish, ingredients or price) to be updated.`);
         } else {
-            if (dish) { //routine if date and time are passed;
+            if (number) {
+                //assign values to data to be updated;
+                data['number'] = number;
+            }
+            if (dish) { 
                 //assign values to data to be updated;
                 data['dish'] = dish;
-
             }
             if (ingredients) {
                 //assign values to data to be updated;
@@ -144,7 +152,7 @@ module.exports = () => {
                     return res.end(`Item updated successfully`);
                 } else {
                     //return if date is not available;
-                    return res.end(`Error: booking not found.`);
+                    return res.end(`Error: menu item not found.`);
                 }
             } catch (ex) {
                 //return if any error occurs;

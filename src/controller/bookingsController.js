@@ -6,8 +6,12 @@ const validations = require('../validations')();
 module.exports = () => {
 
     const getController = async (req, res) => {
+        //check user logged in;
+        const user = req.user;
+        //check user status;
+        const validateUser = await validations.userValidation(user);
         //call bookingModel function;
-        const bookingsList = await bookings.get();
+        const bookingsList = await bookings.get(validateUser);
         if (!bookingsList) {
             //return if no booking found;
             return res.status(404).json({
@@ -22,10 +26,21 @@ module.exports = () => {
     };
 
     const getByDate = async (req, res) => {
-        const date = new Date(req.params.date);
+        //check user logged in;
+        const user = req.user;
+        //check user status;
+        const validateUser = await validations.userValidation(user);
+        let date;
+        try{
+            date = new Date(req.params.date);
+        } catch (ex) {
+            //return if any error occurs;
+            console.log("=== Exception bookings::date.");
+            return res.status(500).json({ error: ex })
+        }
         try {
             //call bookingModel function with date parameter;
-            const bookingsList = await bookings.get(date);
+            const bookingsList = await bookings.get(validateUser, date);
             //check results
             if (bookingsList == null) {
                 // return if booking does not exist
@@ -44,30 +59,7 @@ module.exports = () => {
         }
     };
 
-    const getByDateAndTime = async (req, res) => {
-        const date = new Date(req.params.date);
-        const time = req.params.time;
-        try {
-            //call bookingModel function with date and time parameters;
-            const bookingsList = await bookings.get(date, time);
-            //check results
-            if (bookingsList == null) {
-                //return if booking does not exist
-                res.status(404).json({
-                    error: 404,
-                    message: 'Booking not found',
-                });
-            } else {
-                //return if booking exists
-                res.json(bookingsList);
-            }
-        } catch (ex) {
-            //return if any error occurs;
-            console.log("=== Exception projects::getByDateAndTime.");
-            return res.status(500).json({ error: ex })
-        }
-    };
-
+    
     const postController = async (req, res) => {
         //collect client information;
         let { time, number } = req.body;
@@ -258,7 +250,6 @@ module.exports = () => {
     return {
         getController,
         getByDate,
-        getByDateAndTime,
         postController,
         deleteController,
         updateController

@@ -4,7 +4,7 @@ const nodemailer = require('nodemailer');
 
 module.exports = () => {
 
-    const sendEmail = (mess, email) => {
+    const sendEmail = (message, email) => {
         const transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
@@ -20,7 +20,7 @@ module.exports = () => {
             from: 'webdevcct@gmail.com',
             to: email,
             subject: 'Takeaway',
-            text: `The booking was successfully ${mess}. `
+            text: `${message}.`
         };
         
         transporter.sendMail(mailOptions, function (err, info) {

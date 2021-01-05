@@ -2,15 +2,22 @@ const { ObjectID } = require('mongodb');
 const mail = require('../mail')();
 const takeaway = require('../model/takeawayModel')();
 const validations = require('../validations')();
-const waitingTime = Number(15); //set waiting time;
+const waitingTime = '15 minutes'; //set waiting time;
+
 
 module.exports = () => {
 
     const getController = async (req, res) => {
+        //check user logged in;
+        const user = req.user;
+        //check if objectID is informed;
+        const objectID = req.params.objectID;
+        //check user status;
+        const validateUser = await validations.userValidation(user);
         //call takeawayModel function;
-        const takeawayList = await takeaway.get();
+        const takeawayList = await takeaway.get(validateUser, objectID);
         if (!takeawayList) {
-            //return if no takeaway found;
+            //return if no takeaway is found;
             return res.status(404).json({
                 error: 404,
                 message: 'No takeaway found',
@@ -18,79 +25,30 @@ module.exports = () => {
 
         } else {
             //return general list of takeaway;
-            return res.json({ takeaway: takeawayList });
-        }
-    };
-
-    const getByDate = async (req, res) => {
-        const date = new Date(req.params.date);
-        try {
-            //call bookingModel function with date parameter;
-            const bookingsList = await bookings.get(date);
-            //check results
-            if (bookingsList == null) {
-                // return if booking does not exist
-                return res.status(404).json({
-                    error: 404,
-                    message: 'Booking not found',
-                });
-            } else {
-                // return if booking exists
-                res.json(bookingsList);
-            }
-        } catch (ex) {
-            //return if any error occurs;
-            console.log("=== Exception projects::getByDate.");
-            return res.status(500).json({ error: ex })
-        }
-    };
-
-    const getByDateAndTime = async (req, res) => {
-        const date = new Date(req.params.date);
-        const time = req.params.time;
-        try {
-            //call bookingModel function with date and time parameters;
-            const bookingsList = await bookings.get(date, time);
-            //check results
-            if (bookingsList == null) {
-                //return if booking does not exist
-                res.status(404).json({
-                    error: 404,
-                    message: 'Booking not found',
-                });
-            } else {
-                //return if booking exists
-                res.json(bookingsList);
-            }
-        } catch (ex) {
-            //return if any error occurs;
-            console.log("=== Exception projects::getByDateAndTime.");
-            return res.status(500).json({ error: ex })
+            return res.json({ takeawayList });
         }
     };
 
     const postController = async (req, res) => {
-        let total = Number();
+        //check user logged in;
+        const userID = req.user;
+        //check user status;
+        const validateUser = await validations.userValidation(userID);
+        const orderType = validateUser['status'];
+        let orders = [];
         //collect order information;
-        let { userID, order, comment, status, time, paid } = req.body;
+        let { costumer, date, order, comment, status, time, paid } = req.body;
         //validate entries;
-        if (!userID) {
-            return res.send(`Error: user is missing.`); //return if no userID is informed;
-        } else {
-            const user = await validations.userValidation(userID);
-            if (user === null){
-                return res.send(`Error: userID is not valid.`);
-            } else if (user === -1) {
-                return res.send(`Error: user not found.`);
-            } else {
-                userName = user[0].name;
-                email = user[0].email;
-            }
+        if (!costumer) {
+            costumer = validateUser['id'];
+        }
+        if (!date) {
+            date = new Date();
         }
         if (!order) {
             return res.send(`Error: order is missing.`); //return if no order is informed;
         } else {
-            const valid = await validations.orderValidation(order);
+            const valid = await validations.orderValidation(order, userID);
             if (valid == -1) {
                 //return if no order is not valid;
                 return res.send(`Error: order must have pairs of dish and quantity.`);
@@ -98,8 +56,8 @@ module.exports = () => {
                 //return if objectID is not valid;
                 return res.send(`Error: ObjectID is not valid.`);
             } else {
-                //return order final price;
-                total = valid;
+                //return order with final price;
+                orders.push(valid.order);
             }
         }
         if (!comment) {
@@ -115,14 +73,24 @@ module.exports = () => {
             paid = 'not paid'; //set paid default;
         }
         //method starts only after all the items are passed;
-        if (userID && order) {
+        if (costumer && orders) {
             try {
-                //call takeawayModel function;
-                const results = await takeaway.add(userID, order, comment, total, status, time, paid);
+                let results;
+                if (orderType === 'admin' || orderType === 'staff') {
+                    //call takeawayModel function;
+                    results = await takeaway.addByStaff(costumer, date, orders, comment, status, time, paid);
+                } else {
+                    //call takeawayModel function;
+                    results = await takeaway.addByCostumer(costumer, date, orders, comment, status, time, paid);
+                }
                 //check result;
-                if (results != null) {
+                if (results !== null) {
+                    const total = Object.values(orders)[0].total;
+                    //send notification;
+                    //const message = `Takeaway ordered successfully. Waiting time: ${time}. Total: € ${total}`;
+                    //mail.sendEmail(message, results);
                     //return if takeaway is ordered;
-                    return res.end(`Takeaway ordered successfully. Waiting time: ${time} minutes. Total: € ${total}`);
+                    return res.end(`Takeaway ordered successfully. Waiting time: ${time}. Total: € ${total}`);
                 }
             } catch (ex) {
                 //return if any error occurs;
@@ -133,7 +101,9 @@ module.exports = () => {
     };
 
     const deleteController = async (req, res) => {
-        const id = req.params.objectID;
+        //check user logged in;
+        const userID = req.user;
+        let id = req.params.objectID;
         let objectID;
         try {
             if (new ObjectID(id).toHexString() === id) {
@@ -144,13 +114,14 @@ module.exports = () => {
             console.log("=== Exception takeaway::delete/objectID");
             return res.send(`Error: ObjectID is not valid.`);
         }
+
         try {
-            const results = await takeaway.deleteData(objectID);
+            const results = await takeaway.deleteData(userID, objectID);
             //check result;
-            if (results != null && results != -1) {
+            if (results !== null && results !== -1) {
                 //return if update is done by a staff;
                 return res.end(`Takeaway deleted successfully`);
-            } else if (results == -1) {
+            } else if (results === -1) {
                 //return if client try to delete a takeaway;
                 return res.end(`Error: please contact the restaurant to cancel the takeaway.`);
             } else {
@@ -158,13 +129,14 @@ module.exports = () => {
                 return res.end(`Error: takeaway not found.`);
             }
         } catch (ex) {
-            //return if any error occurs;s
-            console.log("=== Exception bookings::delete");
+            //return if any error occurs;
+            console.log("=== Exception takeaway::delete");
             return res.status(500).json({ error: ex });
         }
     };
 
     const updateController = async (req, res) => {
+        const userID = req.user;
         const id = req.params.objectID;
         let { order, comment, status, time, paid } = req.body;
         let objectID;
@@ -184,13 +156,17 @@ module.exports = () => {
             return res.send(`Error: inform item to be updated.`);
         } else {
             if (order) { //routine if order is passed;
-                const total = await validations.orderValidation(order);
-                data['order'] = order;
-                data['total'] = total;
+                const newOrder = await validations.orderValidation(order, userID);
+                if (newOrder !== null && newOrder !== -1){
+                    data['orders'] = newOrder.order;
+                } else if (newOrder === -1) {
+                    return res.end(`Error: dish and/or quantity is missing.`);        
+                } else {
+                    return res.end(`Error: please contact the restaurant to update takeaway.`);
+                }
             }
             if (comment) {
-                data['numPeople'] = Object.values(results)[0];
-                data['numTables'] = Object.values(results)[1];
+                data['comment'] = comment;
             }
             if (time) {
                 data['time'] = time;
@@ -202,38 +178,80 @@ module.exports = () => {
                 data['paid'] = paid;
             }
             try {
-                const results = await bookings.updateData(objectID, data);
+                const results = await takeaway.updateData(objectID, data);
                 //check result;
-                if (results != null && results != -1 && results != 0) {
-                    //send notification;
-                    mail.sendEmail('updated', results);
-                    //return if date is available;
-                    return res.end(`Booking updated successfully`);
-                } else if (results == -1) {
-                    //return if booking is at current date;
-                    return res.end(`Error: please contact the restaurant to update booking.`);
-                } else if (results == 0) {
-                    //return if date is not available;
-                    return res.end(`Error: bookings not available for ${data['numPeople']} people.`);
+                if (results !== null) {
+                    //return if takeaway is updated;
+                    return res.end(`Takeaway updated successfully`);
                 } else {
-                    //return if date is not available;
-                    return res.end(`Error: booking not found.`);
+                    //return if takeaway is not found;
+                    return res.end(`Error: takeaway not found.`);
                 }
             } catch (ex) {
                 //return if any error occurs;
-                console.log("=== Exception bookings::update");
+                console.log("=== Exception takeaway::update");
                 return res.status(500).json({ error: ex });
             }
+        }
+    };
+
+    const searchController = async (req, res) => {
+        //collect item to be researched;
+        const search = req.body.search;
+        //collect userID;
+        const userID = req.user;
+        try {
+            //call takeaway Model function with search and userID;
+            const searchOrder = await takeaway.search(search, userID);
+            //check results
+            if (searchOrder === null) {
+                // return if takeaway does not have search
+                return res.status(404).json({
+                    error: 404,
+                    message: 'No takeaway found',
+                });
+            } else {
+                // return if search exists
+                res.json(searchOrder);
+            }
+        } catch (ex) {
+            //return if any error occurs;
+            console.log("=== Exception takeaway::search.");
+            return res.status(500).json({ error: ex })
+        }
+    };
+
+
+    const lastOrderController = async (req, res) => {
+        userID = req.user;
+        try {
+            //call takeaway Model function with search;
+            const searchOrder = await takeaway.lastOrder(userID);
+            //check results
+            if (searchOrder == null) {
+                // return if takeaway does not have search
+                return res.status(404).json({
+                    error: 404,
+                    message: 'No takeaway found',
+                });
+            } else {
+                // return if search exists
+                res.json(searchOrder);
+            }
+        } catch (ex) {
+            //return if any error occurs;
+            console.log("=== Exception takeaway::search.");
+            return res.status(500).json({ error: ex })
         }
     };
 
 
     return {
         getController,
-        getByDate,
-        getByDateAndTime,
         postController,
         deleteController,
-        updateController
+        updateController,
+        searchController, 
+        lastOrderController
     }
 }
