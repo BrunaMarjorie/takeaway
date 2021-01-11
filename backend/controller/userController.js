@@ -31,10 +31,13 @@ module.exports = () => {
     const postController = async (req, res) => {
         //collect information;
         const { name, email, address, phoneNumber, password } = req.body;
+        console.log(req.body);
+        console.log(name);
         let status = req.body.status;
         if (!name) {
+            console.log('Error: Name is missing.');
             //error if no name is informed.
-            return res.send(`Error: Name is missing.`);
+            return res.json({error: `Error: Name is missing.`});
         }
         if (!email) {
             //error if no email is informed;
@@ -54,9 +57,9 @@ module.exports = () => {
                 return res.send('Error: Address is not valid.');
             }
         }
-        if (!phoneNumber) {
+        if (phoneNumber === '') {
             //error if no phone number is informed;
-            return res.send(`Error: phone number is missing.`);
+            return res.json({error: `Error: phone number is missing.`});
         } else {
             //validate phone number format;
             const phoneValid = phoneNumber.replace(/[^0-9]/g, '');

@@ -5,14 +5,14 @@ const cors = require('cors');
 
 
 const hostname = '0.0.0.0'; 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 
 const app = module.exports = express();
 
+app.use(cors());
+
 //set up CORs middleware;
-app.use(cors({
-    origin: 'https://radiant-island-78141.herokuapp.com'
-}));
+
 
 //logging 
 app.use((request, response, next) => {
@@ -23,8 +23,14 @@ app.use((request, response, next) => {
 //initiate bodyParser;
 app.use(bodyParser.json());
 
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With-Content-Type, Accept')
+    next();
+});
+
 //initiate Router;
-app.use('/api', router);
+app.use('/', router);
 
 //listen to the server;
 app.listen(port, hostname, () => {

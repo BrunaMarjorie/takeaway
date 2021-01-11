@@ -8,7 +8,7 @@ import Menu from './pages/menu/menu';
 const App = () => {
   return <>
   <GlobalStyle/>
-  <SignUp/>
+  <Homepage/>
   </>
 }
 

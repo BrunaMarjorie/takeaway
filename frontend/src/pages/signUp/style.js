@@ -31,12 +31,13 @@ export const Content = styled.div`
         background: #232129;
         border-radius: 10px;
         border: 2px solid #232129;
-        padding: 16px;
+        padding: 10px;
         width: 100%;
         color: #FFF;
 
         & + input {
             margin-top: 8px;
+            color: #FFF;
         } 
     }
 

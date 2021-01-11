@@ -3,29 +3,27 @@ import logo from '../../images/chinese.jpg';
 import { shade } from 'polished';
 
 export const Container = styled.div`
-    height: 100vh;
+    height: 90.2vh;
     display: flex;
     align-items: stretch;
     background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${logo});
     background-size: cover;
 `;
 
-export const Menubar = styled.nav`
+export const Menubar = styled.div`
     display: flex;
     flex-direction: column;
-    //align-items: center;
     width: 100%;
     
     
-  a, .navbar-nav, .navbar-light .nav-link {
+  a, .navbar-nav, .navbar-light .nav-link .nav-dropdown {
+      font-family: 'Roboto Slab', serif;
+      font-size: 16px; 
+      
+
     &:hover { 
-        color: ${shade(0.2, '#000')} }
-  }
-  .navbar-brand {
-    font-size: 20px;
-    color: #000;
-    &:hover { 
-        color: ${shade(0.2, '#2f9162')} }
+        color: ${shade(0.2, '#581845')} }
+        
   }
 `;
 
@@ -39,10 +37,12 @@ export const Content = styled.div`
       font-size: 3rem;
       font-weight: 500;
       white-space: nowrap;
+      text-align: center;
     }
 
     p { 
       font-size: 1.5rem;
       color: #fff;
+      text-align: center;
     }
 `;
