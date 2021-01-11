@@ -1,12 +1,18 @@
 const express = require('express'); //create express variable;
 const bodyParser = require('body-parser'); //create variable to read client entries;
 const router = require('./routes'); //create routes;
+const cors = require('cors'); 
 
 
 const hostname = '0.0.0.0'; 
 const port = process.env.PORT || 3000;
 
 const app = module.exports = express();
+
+//set up CORs middleware;
+app.use(cors({
+    origin: 'https://radiant-island-78141.herokuapp.com'
+}));
 
 //logging 
 app.use((request, response, next) => {
@@ -18,7 +24,7 @@ app.use((request, response, next) => {
 app.use(bodyParser.json());
 
 //initiate Router;
-app.use('/', router);
+app.use('/api', router);
 
 //listen to the server;
 app.listen(port, hostname, () => {
