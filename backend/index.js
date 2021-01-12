@@ -3,16 +3,13 @@ const bodyParser = require('body-parser'); //create variable to read client entr
 const router = require('./routes'); //create routes;
 const cors = require('cors'); 
 
-
 const hostname = '0.0.0.0'; 
 const port = process.env.PORT || 3001;
 
 const app = module.exports = express();
 
-app.use(cors());
-
 //set up CORs middleware;
-
+app.use(cors());
 
 //logging 
 app.use((request, response, next) => {
@@ -23,6 +20,7 @@ app.use((request, response, next) => {
 //initiate bodyParser;
 app.use(bodyParser.json());
 
+//set header;
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With-Content-Type, Accept')

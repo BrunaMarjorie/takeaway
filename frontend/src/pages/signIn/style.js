@@ -24,6 +24,7 @@ export const Content = styled.div`
         text-align: center;
 
     h1 {
+        margin-top: 50px;
         margin-bottom: 24px;
     }
 
@@ -33,7 +34,12 @@ export const Content = styled.div`
         border: 2px solid #232129;
         padding: 10px;
         width: 100%;
-        color: #FFF;
+        color: #CCD1D1;
+
+        &:focus {
+            background: #CCD1D1;
+            color: #232129;
+        }
 
         & + input {
             margin-top: 8px;

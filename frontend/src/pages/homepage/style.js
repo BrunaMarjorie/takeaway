@@ -3,28 +3,13 @@ import logo from '../../images/chinese.jpg';
 import { shade } from 'polished';
 
 export const Container = styled.div`
-    height: 90.2vh;
+    height: 100vh;
+    width: 100vw;
     display: flex;
+    flex-direction: column;
     align-items: stretch;
     background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${logo});
     background-size: cover;
-`;
-
-export const Menubar = styled.div`
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    
-    
-  a, .navbar-nav, .navbar-light .nav-link .nav-dropdown {
-      font-family: 'Roboto Slab', serif;
-      font-size: 16px; 
-      
-
-    &:hover { 
-        color: ${shade(0.2, '#581845')} }
-        
-  }
 `;
 
 export const Content = styled.div`

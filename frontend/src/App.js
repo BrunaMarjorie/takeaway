@@ -1,14 +1,11 @@
 import React from 'react';
 import GlobalStyle from './styles/global';
-import SignIn from './pages/signIn/sign_in';
-import SignUp from './pages/signUp/sign_up';
-import Homepage from './pages/homepage/homepage';
-import Menu from './pages/menu/menu';
+import Header from './styles/header';
 
 const App = () => {
   return <>
   <GlobalStyle/>
-  <Homepage/>
+  <Header/>
   </>
 }
 

@@ -30,73 +30,21 @@ module.exports = () => {
 
     const postController = async (req, res) => {
         //collect information;
-        const { name, email, address, phoneNumber, password } = req.body;
-        console.log(req.body);
-        console.log(name);
-        let status = req.body.status;
-        if (!name) {
-            console.log('Error: Name is missing.');
-            //error if no name is informed.
-            return res.json({error: `Error: Name is missing.`});
-        }
-        if (!email) {
-            //error if no email is informed;
-            return res.send(`Error: Email is missing.`);
-        } else {
-            //validate email format;
-            const mailformat = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
-            if (!mailformat.test(String(email).toLowerCase())) {
-                return res.send(`Error: Email format is not valid.`);
-            }
-        }
-        if (address) {
-            //validate address;
-            const validAddress = await validations.addressValidation(address);
-            if (!validAddress['lat'] || !validAddress['long']) {
-                //error if address is not valid;
-                return res.send('Error: Address is not valid.');
-            }
-        }
-        if (phoneNumber === '') {
-            //error if no phone number is informed;
-            return res.json({error: `Error: phone number is missing.`});
-        } else {
-            //validate phone number format;
-            const phoneValid = phoneNumber.replace(/[^0-9]/g, '');
-            if (phoneValid.length != 10) {
-                //return if phone number format is not valid;
-                return res.send(`Error: phone number format not valid.`);
-            }
-        }
-        if (!status) {
-            //set status as 'costumer' if no status is informed;
-            status = 'costumer';
-            //validate usertype;
-        } else if (status !== "admin" && status !== "staff" && status !== "costumer") {
-            return res.send(`User status is not valid. It must be 'admin', 'staff' or 'costumer'.`);
-        }
-        if (!password) {
-            //error if no password is informed;
-            return res.send(`Error: Password is missing.`);
-        }
-        //method starts only after all the items are passed;
-        if (name && email && phoneNumber && status && password) {
-            const hash = bcrypt.hashSync(password, 10);
-            try {
-                const results = await users.add(name, email, address, phoneNumber, status, hash);
-                //check if email is unique;
-                if (results != null) {
-                    //send notification;
-                    //const message = 'Welcome to Takeaway!'
-                    //mail.sendEmail(message, email);
-                    return res.end(`POST: ${name}, ${email}, ${status}`);
-                } else {
-                    return res.end(`Error: ${email} already exists in our system.`);
-                }
-            } catch (ex) {
-                console.log("=== Exception user::add");
-                return res.status(500).json({ error: ex })
-            }
+        const { name, email, status, password, confPassword } = req.body;
+        try {
+            const { results, error } = await users.add(name, email, status, password, confPassword);
+            if (error) {
+                console.log(error);
+                res.status(400).send({error})
+            } else {
+                //send notification;
+                const message = 'Welcome to Takeaway Restaurant!'
+                //mail.sendEmail(message, email);
+                res.send(`POST: ${name}, ${email}`);
+            }          
+        } catch (ex) {
+            console.log("=== Exception user::add");
+            return res.status(500).json({ error: ex })
         }
     }
 

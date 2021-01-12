@@ -1,16 +1,19 @@
 const { ObjectID } = require('mongodb');
 const db = require('../database')();
 const COLLECTION = 'users';
+const bcrypt = require('bcrypt');
+const validations = require('../validations')();
+const mail = require('../mail')();
 
 module.exports = () => {
     const get = async (userID = null, objectID = null) => {
         console.log('   inside users model');
-        if (userID['status'] === 'admin' && objectID === null) {  
+        if (userID['status'] === 'admin' && objectID === null) {
             //if user status is admin, they can access staff information;
             try {
-                const query = {'status': 'staff'}; //filter the access;
+                const query = { 'status': 'staff' }; //filter the access;
                 //select information that can be accessed;
-                const project = {'name': 1};
+                const project = { 'name': 1 };
                 const users = await db.find(COLLECTION, query, project);
                 if (users.length != 0) {
                     return users;
@@ -21,12 +24,12 @@ module.exports = () => {
                 console.log("=== Exception user::get");
                 return { error: ex };
             }
-        } else if (userID['status'] === 'admin' && objectID !== null){
+        } else if (userID['status'] === 'admin' && objectID !== null) {
             //routine if objectID is passed;
             try {
-                const query = {'status': 'staff', '_id': ObjectID(objectID)}; //filter the access;
+                const query = { 'status': 'staff', '_id': ObjectID(objectID) }; //filter the access;
                 //select information that can be accessed;
-                const project = {'name': 1, 'email': 1, 'phoneNumber': 1, 'address': 1};
+                const project = { 'name': 1, 'email': 1, 'phoneNumber': 1, 'address': 1 };
                 const users = await db.find(COLLECTION, query, project);
                 if (users.length != 0) {
                     return users;
@@ -41,7 +44,7 @@ module.exports = () => {
             try {
                 const query = { '_id': ObjectID(userID['id']) }; //filter the access;
                 //select information that can be accessed;
-                const project = {'name': 1, 'email': 1, 'phoneNumber': 1, '_id': 0, 'address': 1};
+                const project = { 'name': 1, 'email': 1, 'phoneNumber': 1, '_id': 0, 'address': 1 };
                 const users = await db.find(COLLECTION, query, project);
                 //check if user exists;
                 if (users.length != 0) {
@@ -56,7 +59,40 @@ module.exports = () => {
         }
     }
 
-    const add = async (name, email, address, phoneNumber, status, password) => {
+    const add = async (name, email, status, password, confPassword) => {
+        let hash;
+        if (!name) {
+            //error if no name is informed.
+            return { error: 'Name is missing.' };
+        }
+        if (!email) {
+            //error if no email is informed;
+            return { error: 'Email is missing.'};
+        } else {
+            //validate email format;
+            const mailformat = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+            if (!mailformat.test(String(email).toLowerCase())) {
+                return { error: 'Email format is not valid.'};
+            }
+        }
+        if (!status) {
+            //set status as 'costumer' if no status is informed;
+            status = 'costumer';
+            //validate usertype;
+        } else if (status !== "admin" && status !== "staff" && status !== "costumer") {
+            return { error: `User status is not valid. It must be 'admin', 'staff' or 'costumer'.`};
+        }
+        if (!password) {
+            //error if no password is informed;
+            return {error: 'Password is missing.'};
+        } else {
+            if (password !== confPassword){
+                return {error: 'Password confirmation does not match.'};
+            } else {
+                hash = bcrypt.hashSync(password, 10);
+            }
+        }
+
         console.log('   inside users model');
         let valid;
         try {
@@ -66,15 +102,13 @@ module.exports = () => {
             console.log("=== Exception user::get{email}");
             return { error: ex };
         }
-        if (valid.length >= 0) {
+        if (!valid) {
             try {
                 const results = await db.add(COLLECTION, {
                     name: name,
                     email: email,
-                    address: address,
-                    phoneNumber: phoneNumber,
                     status: status,
-                    password: password,
+                    password: hash,
                 });
                 return results.result;
             } catch (ex) {
@@ -82,7 +116,7 @@ module.exports = () => {
                 return { error: ex };
             }
         } else {
-            return null;
+            return { error: 'User already exists in our system.'};
         }
     };
 
@@ -149,25 +183,25 @@ module.exports = () => {
     const search = async (search) => {
         console.log('   inside search user');
         if (!search) {
-           return null;
+            return null;
         } else {
-           try {
-               console.log(search);
-              //get user with filter;
-              const filter = {'$text': {'$search': search}};
-              const user = await db.get(COLLECTION, filter);
-              if (user.length === 0) {
-                 return null;
-              } else {
-                 return user;
-              }
-           } catch (ex) {
-              //return if any error occurs when connecting to database;
-              console.log("=== Exception user::get");
-              return { error: ex };
-           }
+            try {
+                console.log(search);
+                //get user with filter;
+                const filter = { '$text': { '$search': search } };
+                const user = await db.get(COLLECTION, filter);
+                if (user.length === 0) {
+                    return null;
+                } else {
+                    return user;
+                }
+            } catch (ex) {
+                //return if any error occurs when connecting to database;
+                console.log("=== Exception user::get");
+                return { error: ex };
+            }
         }
-     }
+    }
 
     return {
         get,

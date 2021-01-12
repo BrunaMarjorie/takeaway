@@ -35,8 +35,10 @@ module.exports = () => {
     const loginController = async (req, res) => {
         let user;
         let token;
-        const { email, password } = req.headers;
-        const clientIp = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+        const { email, password } = req.body;
+        console.log(email);
+        //const { email, password } = req.headers;
+        //const clientIp = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
 
         const FailedAuthMessage = {
             error: "Failed Authentication.",
@@ -78,6 +80,7 @@ module.exports = () => {
                 return res.status(500).json({ error: ex });
             };
         }
+        console.log('logged');
         return res.redirect('/');
     }
 
