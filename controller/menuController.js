@@ -1,6 +1,6 @@
 const { ObjectID } = require('mongodb');
 const menu = require('../model/menuModel')();
-const validations = require('../validations')();
+const validations = require('../src/validations')();
 
 module.exports = () => {
 

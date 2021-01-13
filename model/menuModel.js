@@ -1,5 +1,5 @@
 const { ObjectID, Double } = require('mongodb');
-const db = require('../database')(); //call database;
+const db = require('../src/database')(); //call database;
 const COLLECTION = 'menu'; //name collection to database
 
 module.exports = () => {

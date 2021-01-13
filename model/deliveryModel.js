@@ -1,5 +1,5 @@
 const { ObjectID } = require('mongodb');
-const db = require('../database')(); //call database;
+const db = require('../src/database')(); //call database;
 const COLLECTION = 'delivery'; //name collection to database;
 
 

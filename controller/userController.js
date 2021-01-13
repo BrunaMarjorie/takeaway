@@ -1,8 +1,8 @@
 const { ObjectID } = require('mongodb');
 const users = require('../model/usersModel')();
 const bcrypt = require('bcrypt');
-const validations = require('../validations')();
-const mail = require('../mail')();
+const validations = require('../src/validations')();
+const mail = require('../src/mail')();
 
 
 module.exports = () => {

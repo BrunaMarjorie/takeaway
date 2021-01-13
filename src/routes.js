@@ -1,8 +1,8 @@
-const bookings = require('./controller/bookingsController')();
-const menu = require('./controller/menuController')();
-const takeaway = require('./controller/takeawayController')();
-const users = require('./controller/userController')();
-const delivery = require('./controller/deliveryController')();
+const bookings = require('../controller/bookingsController')();
+const menu = require('../controller/menuController')();
+const takeaway = require('../controller/takeawayController')();
+const users = require('../controller/userController')();
+const delivery = require('../controller/deliveryController')();
 const session = require('./session')();
 
 module.exports = (function () {

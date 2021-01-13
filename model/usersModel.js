@@ -1,9 +1,9 @@
 const { ObjectID } = require('mongodb');
-const db = require('../database')();
+const db = require('../src/database')();
 const COLLECTION = 'users';
 const bcrypt = require('bcrypt');
-const validations = require('../validations')();
-const mail = require('../mail')();
+const validations = require('../src/validations')();
+const mail = require('../src/mail')();
 
 module.exports = () => {
     const get = async (userID = null, objectID = null) => {

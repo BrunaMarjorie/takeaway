@@ -1,7 +1,7 @@
 const { ObjectID } = require('mongodb');
-const mail = require('../mail')();
+const mail = require('../src/mail')();
 const bookings = require('../model/bookingModel')();
-const validations = require('../validations')();
+const validations = require('../src/validations')();
 
 module.exports = () => {
 
