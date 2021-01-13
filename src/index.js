@@ -11,6 +11,15 @@ const app = module.exports = express();
 //set up CORs middleware;
 app.use(cors());
 
+//set header;
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Credentials', true);
+    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With')
+    next();
+});
+
 //logging 
 app.use((request, response, next) => {
     console.log('[%s] %s -- %s', new Date(), request.method, request.url);
@@ -20,12 +29,6 @@ app.use((request, response, next) => {
 //initiate bodyParser;
 app.use(bodyParser.json());
 
-//set header;
-app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With-Content-Type, Accept')
-    next();
-});
 
 //initiate Router;
 app.use('/', router);

@@ -102,7 +102,7 @@ module.exports = () => {
             console.log("=== Exception user::get{email}");
             return { error: ex };
         }
-        if (!valid) {
+        if (valid.length === 0) {
             try {
                 const results = await db.add(COLLECTION, {
                     name: name,
