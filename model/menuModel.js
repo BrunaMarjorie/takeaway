@@ -6,6 +6,7 @@ module.exports = () => {
 
    const get = async (search = null) => {
       console.log('   inside model menu');
+      console.log('search: ' + search);
       if (!search) {
          try {
             //get menu;

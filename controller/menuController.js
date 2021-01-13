@@ -163,7 +163,8 @@ module.exports = () => {
     };
 
     const searchController = async (req, res) => {
-        const search = req.body.search;
+        const { search } = req.body;
+        console.log(search);
         try {
             //call menuModel function with search;
             const menuSearch = await menu.get(search);

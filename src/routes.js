@@ -18,6 +18,7 @@ module.exports = (function () {
     routes.post('/users/register', users.postController);
     routes.post('/users/login', session.loginController);
     routes.post('/users/logout', session.logoutController);
+    routes.post('/forgot/password', session.forgotController);
 
 
     //users routes;
@@ -39,7 +40,7 @@ module.exports = (function () {
 
     //menu routes;
     routes.get('/menu', menu.getController);
-    routes.get('/search/menu', menu.searchController);
+    routes.post('/search/menu', menu.searchController);
     routes.post('/menu', session.isAuthenticated, menu.postController);
     routes.delete('/menu/:objectID', session.isAuthenticated, menu.deleteController);
     routes.put('/menu/:objectID', session.isAuthenticated, menu.updateController);

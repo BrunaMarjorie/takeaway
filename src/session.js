@@ -2,6 +2,7 @@ const { sign, verify } = require('jsonwebtoken');
 const db = require('./database')();
 const COLLECTION = 'users';
 const bcrypt = require('bcrypt');
+const mail = require('./mail')();
 const { ObjectID } = require('mongodb');
 
 
@@ -143,9 +144,30 @@ module.exports = () => {
         return res.redirect('/');
     }
 
+
+    const forgotController = async (req, res) => {
+        const { email } = req.body;
+
+        console.log(email);
+
+        const link = `https://radiant-island-78141.herokuapp.com/reset/password/${email}`
+
+        console.log(link);
+        const message = `Please access the link below to reset your password.`;
+
+        const notification = mail.sendEmail(message, email);
+
+        if (notification !== null) {
+            return 1;
+        } else {
+            return null;
+        }
+    }
+
     return {
         loginController,
         logoutController,
-        isAuthenticated
+        isAuthenticated,
+        forgotController
     }
 }

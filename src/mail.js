@@ -27,7 +27,7 @@ module.exports = () => {
 
             if (err) {
                 console.log('Error: ', err);
-                return;
+                return null;
             } else {
                 console.log('Mail sent' + info);
             }
