@@ -67,12 +67,12 @@ module.exports = () => {
         }
         if (!email) {
             //error if no email is informed;
-            return { error: 'Email is missing.'};
+            return { error: 'Email is missing.' };
         } else {
             //validate email format;
             const mailformat = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
             if (!mailformat.test(String(email).toLowerCase())) {
-                return { error: 'Email format is not valid.'};
+                return { error: 'Email format is not valid.' };
             }
         }
         if (!status) {
@@ -80,14 +80,14 @@ module.exports = () => {
             status = 'costumer';
             //validate usertype;
         } else if (status !== "admin" && status !== "staff" && status !== "costumer") {
-            return { error: `User status is not valid. It must be 'admin', 'staff' or 'costumer'.`};
+            return { error: `User status is not valid. It must be 'admin', 'staff' or 'costumer'.` };
         }
         if (!password) {
             //error if no password is informed;
-            return {error: 'Password is missing.'};
+            return { error: 'Password is missing.' };
         } else {
-            if (password !== confPassword){
-                return {error: 'Password confirmation does not match.'};
+            if (password !== confPassword) {
+                return { error: 'Password confirmation does not match.' };
             } else {
                 hash = bcrypt.hashSync(password, 10);
             }
@@ -116,7 +116,7 @@ module.exports = () => {
                 return { error: ex };
             }
         } else {
-            return { error: 'User already exists in our system.'};
+            return { error: 'User already exists in our system.' };
         }
     };
 
@@ -148,35 +148,77 @@ module.exports = () => {
         }
     }
 
-    const updateData = async (userID, data) => {
-        try {
-            console.log('   inside update model users');
-            //find user using objectID;
-            const valid = await db.get(COLLECTION, { '_id': ObjectID(userID) });
-            if (valid.length > 0) {
-                try {
-                    //collect user email;
-                    const email = Object.values(valid)[0].email;
-                    //filter the booking to be updated;
-                    const filter = { '_id': ObjectID(userID) };
-                    //set info to be updated;
-                    const updateDoc = { '$set': data };
-                    const put = await db.updateData(COLLECTION, filter, updateDoc);
-                    //return user email;
-                    return email;
-                } catch (ex) {
-                    //return if any error occurs when connecting to database;
-                    console.log("=== Exception users::update");
-                    return { error: ex };
-                }
-            } else {
-                //return if no user is found;
-                return null;
+    const updateData = async (userID, name, phoneNumber, password, address) => {
+        let data = {}; //array of items to be updated;
+
+        if (!name && !phoneNumber && !password && !address) {
+            //return if no valid information is passed;
+            return { error: 'Inform item to be updated.' };
+        
+        } else {
+            if (name) {
+                //assign values to data to be updated;
+                data['name'] = name;
             }
-        } catch (ex) {
-            //return if any error occurs when connecting to database;
-            console.log("=== Exception users::update/find");
-            return { error: ex };
+            if (phoneNumber) { //routine if phoneNumber passed;
+                const phoneValid = phoneNumber.replace(/[^0-9]/g, '');
+                //validate phone number format;
+                if (phoneValid.length != 10) {
+                    //return if phone number format is not valid;
+                    return { error: 'Phone number format not valid.' };
+                } else {
+                    //assign values to data to be updated;
+                    data['phoneNumber'] = phoneNumber;
+                }
+            }
+            if (password) {
+                //hash password;
+                const hash = bcrypt.hashSync(password, 10);
+                //assign values to data to be updated;
+                data['password'] = hash;
+            }
+            if (address) {
+                //validate address;
+                const validAddress = await validations.addressValidation(address);
+                if (!validAddress['lat'] || !validAddress['long']) {
+                    //error if address is not valid;
+                    return { error: 'Address is not valid.' };
+                } else {
+                    //assign values to data to be updated;
+                    data['address'] = address;
+                }
+            }
+
+            try {
+                console.log('   inside update model users');
+                //find user using objectID;
+                const valid = await db.get(COLLECTION, { '_id': ObjectID(userID) });
+                
+                if (valid.length > 0) {
+                    try {
+                        //collect user email;
+                        const email = Object.values(valid)[0].email;
+                        //filter the booking to be updated;
+                        const filter = { '_id': ObjectID(userID) };
+                        //set info to be updated;
+                        const updateDoc = { '$set': data };
+                        const put = await db.updateData(COLLECTION, filter, updateDoc);
+                        //return user email;
+                        return {results: email};
+                    } catch (ex) {
+                        //return if any error occurs when connecting to database;
+                        console.log("=== Exception users::update");
+                        return { error: ex };
+                    }
+                } else {
+                    //return if no user is found;
+                    return { error: 'No user found.'};
+                }
+            } catch (ex) {
+                //return if any error occurs when connecting to database;
+                console.log("=== Exception users::update/find");
+                return { error: ex };
+            }
         }
     }
 

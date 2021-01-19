@@ -13,15 +13,18 @@ module.exports = () => {
         try {
             //look up and match user key;        
             const users = await db.get(COLLECTION);
+            let user;
             for (i in users) {
                 if ((email === users[i].email)) {
+                    //check password;
                     if (bcrypt.compareSync(password, users[i].password)) {
                         userID = users[i]._id;
+                        user = users[i];
                     }
                 }
             }
             if (userID) {
-                return userID;
+                return user;
             } else {
                 console.log(" Error: User not found.");
                 return null;
@@ -37,15 +40,15 @@ module.exports = () => {
         let user;
         let token;
         const { email, password } = req.body;
-        console.log(email);
         //const { email, password } = req.headers;
-        //const clientIp = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+        const clientIp = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
 
         const FailedAuthMessage = {
             error: "Failed Authentication.",
         };
 
         if (!password || !email) {
+            //return if no information is passed;
             console.log("   [%s] FAILED AUTHENTICATION -- %s, No email or password supplied",
                 new Date(), clientIp);
             FailedAuthMessage.code = "01";
@@ -67,11 +70,12 @@ module.exports = () => {
                 return res.status(401).json(FailedAuthMessage);
             }
 
+            // assign a validation token to the user
             token = sign({ user: user }, process.env.TOKEN, {
-                expiresIn: '6h',
+                expiresIn: '7h', //token is going to be valid for 7h.
             });
             try {
-                const filter = { '_id': ObjectID(user) };
+                const filter = { '_id': ObjectID(user._id) };
                 //set info to be updated;
                 const updateDoc = { '$set': { 'token': token } };
                 const result = await db.updateData(COLLECTION, filter, updateDoc);
@@ -81,24 +85,27 @@ module.exports = () => {
                 return res.status(500).json({ error: ex });
             };
         }
+        //return when successfull;
         console.log('logged');
-        return res.redirect('/');
+        return res.send({email: user.email, status: user.status, name: user.name});
     }
 
     const isAuthenticated = async (req, res, next) => {
-        //const authHeader = req.headers.authorization;
+        //const username = req.headers.email;
+        const { user } = req.body;
 
-        const username = req.headers.email;
-
-        if (!username) {
+        if (!user) {
+            //return if no information provided;
             return res.status(401).json('No user logged in.');
         }
         try {
-            const user = await db.get(COLLECTION, { email: username });
+            //check user and token;
+            const user = await db.get(COLLECTION, { email: user });
             const token = user[0].token;
 
             if (token) {
                 try {
+                    //check if token is valid;
                     const decoded = verify(token, process.env.TOKEN);
                     req.user = decoded.user;
                     return next();
@@ -109,6 +116,7 @@ module.exports = () => {
                     return res.status(500).json('You must be logged in to access this page.');
                 }
             } else {
+                //return if token not valid.
                 return res.status(401).json('You must be logged in to access this page.');
             }
             
@@ -127,7 +135,7 @@ module.exports = () => {
             return res.status(401).json('No user logged in.');
         }
         try {
-
+            //check user information;
             const user = await db.find(COLLECTION, { email: username });
             
             const filter = { '_id': ObjectID(user) };
@@ -148,11 +156,12 @@ module.exports = () => {
     const forgotController = async (req, res) => {
         const { email } = req.body;
 
-        console.log(email);
-
-        const link = `https://radiant-island-78141.herokuapp.com/reset/password/${email}`
+        //create link to be send;
+        const link = `https://radiant-island-78141.herokuapp.com/reset/password/${email}/reset/password`
 
         console.log(link);
+
+        //message to be sent;
         const message = `Please access the link below to reset your password.`;
 
         const notification = mail.sendEmail(message, email);

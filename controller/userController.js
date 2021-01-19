@@ -34,14 +34,15 @@ module.exports = () => {
         try {
             const { results, error } = await users.add(name, email, status, password, confPassword);
             if (error) {
+                //return if any error is found;
                 console.log(error);
-                res.status(400).send({error})
+                res.status(400).send({ error });
             } else {
-                //send notification;
+                //send notification if succesfull;
                 const message = 'Welcome to Takeaway Restaurant!'
                 //mail.sendEmail(message, email);
                 res.send(`POST: ${name}, ${email}`);
-            }          
+            }
         } catch (ex) {
             console.log("=== Exception user::add");
             return res.status(500).json({ error: ex })
@@ -100,61 +101,21 @@ module.exports = () => {
         const userID = req.user;
         //collect information to be updated;
         const { name, phoneNumber, password, address } = req.body;
-        let data = {}; //array of items to be updated;
-
-        if (!name && !phoneNumber && !password && !address) {
-            //return if no valid information is passed;
-            return res.send(`Error: inform item to be updated.`);
-        } else {
-            if (name) {
-                //assign values to data to be updated;
-                data['name'] = name;
-            }
-            if (phoneNumber) { //routine if phoneNumber passed;
-                const phoneValid = phoneNumber.replace(/[^0-9]/g, '');
-                //validate phone number format;
-                if (phoneValid.length != 10) {
-                    //return if phone number format is not valid;
-                    return res.send(`Error: phone number format not valid.`);
-                } else {
-                    //assign values to data to be updated;
-                    data['phoneNumber'] = phoneNumber;
-                }
-            }
-            if (password) {
-                //hash password;
-                const hash = bcrypt.hashSync(password, 10);
-                //assign values to data to be updated;
-                data['password'] = hash;
-            }
-            if (address) {
-                //validate address;
-                const validAddress = await validations.addressValidation(address);
-                if (!validAddress['lat'] || !validAddress['long']) {
-                    //error if address is not valid;
-                    return res.send('Error: Address is not valid.');
-                } else {
-                    //assign values to data to be updated;
-                    data['address'] = address;
-                }
-            }
-            try {
-                const results = await users.updateData(userID, data);
-                //check result;
-                if (results != null && results != -1 && results != 0) {
-                    //send notification;
-                    //mail.sendEmail('updated', results);
-                    //return if date is available;
-                    return res.end(`User profile updated successfully`);
-                } else {
-                    //return if user is not in the database;
-                    return res.end(`Error: user not found.`);
-                }
-            } catch (ex) {
-                //return if any error occurs;
-                console.log("=== Exception users controll::update");
-                return res.status(500).json({ error: ex });
-            }
+        try {
+            const { results, error } = await users.updateData(userID, name, phoneNumber, password, address);
+            //check result;
+            if (error) {
+                //return if any error is found;
+                console.log(error);
+                res.status(400).send({error});
+            } else {
+                //return if succesfull;
+                return res.send(`User profile updated successfully`);
+            } 
+        } catch (ex) {
+            //return if any error occurs;
+            console.log("=== Exception users controll::update");
+            return res.status(500).json({ error: ex });
         }
     };
 

@@ -19,6 +19,8 @@ module.exports = (function () {
     routes.post('/users/login', session.loginController);
     routes.post('/users/logout', session.logoutController);
     routes.post('/forgot/password', session.forgotController);
+    routes.put('/:email/reset/password', session.forgotController);
+    
 
 
     //users routes;
