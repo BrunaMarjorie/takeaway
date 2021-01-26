@@ -64,7 +64,7 @@ module.exports = () => {
         }
     }
 
-    const add = async (time, number, date, email) => {
+    const add = async (date, time, number, email, name, phoneNumber) => {
         let tablesAlreadyBooked = Number(); //number of tables already booked;
         let bookings;
         let numTables = Number(); //set number of tables as an integer;
@@ -128,10 +128,12 @@ module.exports = () => {
             try {
                 //if available, connect to database;
                 const results = await db.add(COLLECTION, {
+                    name: name,
                     email: email,
+                    phoneNumber: phoneNumber,
                     date: date,
                     numPeople: numPeople,
-                    numTables: numTables
+                    numTables: numTables,
                 });
                 //return user email;
                 return results;
@@ -142,7 +144,7 @@ module.exports = () => {
             }
         } else {
             //return null if spot is not available;
-            return { error: `Bookings not available for ${numPeople} people` };;
+            return { error: `Bookings not available for ${numPeople} people on this day.` };;
         }
     };
 

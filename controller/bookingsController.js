@@ -7,11 +7,13 @@ module.exports = () => {
 
     const getController = async (req, res) => {
         //check user logged in;
-        const user = req.user;
+        //const user = req.user;
+        const user = 'staff';
         //check user status;
-        const validateUser = await validations.userValidation(user);
+        //const validateUser = await validations.userValidation(user);
         //call bookingModel function;
-        const bookingsList = await bookings.get(validateUser);
+        //const bookingsList = await bookings.get(validateUser);
+        const bookingsList = await bookings.get(user);
         if (!bookingsList) {
             //return if no booking found;
             return res.status(404).json({
@@ -70,7 +72,7 @@ module.exports = () => {
         console.log('  inside post bookings');
         try {
             //call bookingModel function;
-            const { results, error } = await bookings.add(time, number, date, email);
+            const { results, error } = await bookings.add(date, time, number, email, name, phoneNumber);
             //check result;
             if (error) {
                 //return if any error is found;

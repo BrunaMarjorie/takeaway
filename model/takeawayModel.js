@@ -1,6 +1,8 @@
 const { ObjectID } = require('mongodb');
 const db = require('../src/database')(); //call database;
 const COLLECTION = 'takeaway'; //name collection to database;
+const validations = require('../src/validations')();
+const waitingTime = '15min';
 
 
 module.exports = () => {
@@ -13,7 +15,7 @@ module.exports = () => {
             try {
                 const query = {'status': 'open'}; //filter the access;
                 //select information that can be accessed;
-                const project = { 'costumer': 1 };
+                const project = { 'costumer': 1, 'time': 1, 'paid': 1 };
                 const takeaway = await db.find(COLLECTION, query, project);
                 if (takeaway.length === 0) {
                     return null;
@@ -61,13 +63,55 @@ module.exports = () => {
         }
     }
 
-    const addByStaff = async (costumer, date, orders, comment, status, time, paid) => {
+    const addByStaff = async (userID, name, phoneNumber, date, order, comment, status, time, paid) => {
         console.log('  inside post takeaway');
+        let total;
+        let orders = [];
+        //validate entries;
+        if (!name) {
+            return { error: 'Costumer name is missing.' };
+        }
+        if (!phoneNumber) {
+            return { error: 'Phone number is missing.' };
+        }
+        if (!date) {
+            date = new Date();
+        }
+        if (!order) {
+            return { error: 'Order is missing.' }; //return if no order is informed;
+        } else {
+            const valid = await validations.orderValidation(order, userID);
+            if (valid == -1) {
+                //return if no order is not valid;
+                return {error: 'Order must have pairs of dish and quantity'};
+            } else if (valid == null) {
+                //return if objectID is not valid;
+                return {error: 'ObjectID is not valid.'};
+            } else {
+                //return order with final price;
+                orders = valid.orders;
+                total = parseFloat(valid.total).toFixed(2);
+            }
+        }
+        if (!comment) {
+            comment = 'no comments'; //set comment default;
+        }
+        if (!status) {
+            status = "open"; //set status default;
+        }
+        if (!time) {
+            time = waitingTime; //set time default;
+        }
+        if (!paid) {
+            paid = 'not paid'; //set paid default;
+        }
         try {
             const results = await db.add(COLLECTION, {
-                costumer: costumer,
+                costumer: name,
+                phoneNumber: phoneNumber,
                 date: date,
                 orders: orders,
+                price: total,
                 comment: comment,
                 status: status,
                 time: time,
@@ -82,11 +126,45 @@ module.exports = () => {
         }
     };
 
-    const addByCostumer = async (userID, date, orders, comment, status, time, paid) => {
-        console.log('  inside post takeaway');
+    const addByCostumer = async (userID, date, order, comment, status, time, paid) => {
+        console.log('  inside this post takeaway');
+        let total;
         let user;
         let costumer;
         let email;
+        let orders = [];
+        //validate entries;
+        if (!date) {
+            date = new Date();
+        }
+        if (!order) {
+            return { error: 'Order is missing.' }; //return if no order is informed;
+        } else {
+            const valid = await validations.orderValidation(order, userID);
+            if (valid == -1) {
+                //return if no order is not valid;
+                return {error: 'Order must have pairs of dish and quantity'};
+            } else if (valid == null) {
+                //return if objectID is not valid;
+                return {error: 'ObjectID is not valid.'};
+            } else {
+                //return order with final price;
+                orders = valid.orders;
+                total = parseFloat(valid.total).toFixed(2);
+            }
+        }
+        if (!comment) {
+            comment = 'no comments'; //set comment default;
+        }
+        if (!status) {
+            status = "open"; //set status default;
+        }
+        if (!time) {
+            time = waitingTime; //set time default;
+        }
+        if (!paid) {
+            paid = 'not paid'; //set paid default;
+        }
         try {
             //check user id and collect user name;
             user = await db.get('users', { '_id': ObjectID(userID) });
@@ -103,13 +181,14 @@ module.exports = () => {
                 costumer: costumer,
                 date: date,
                 orders: orders,
+                price: total,
                 comment: comment,
                 status: status,
                 time: time,
                 paid: paid
             });
             //return email to send notification;
-            return email;
+            return {results: email};
         } catch (ex) {
             //return if any error occurs when connecting to database;
             console.log("=== Exception takeaway model::add");

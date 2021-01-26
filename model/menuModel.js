@@ -1,6 +1,7 @@
 const { ObjectID, Double } = require('mongodb');
 const db = require('../src/database')(); //call database;
 const COLLECTION = 'menu'; //name collection to database
+const validations = require('../src/validations')();
 
 module.exports = () => {
 

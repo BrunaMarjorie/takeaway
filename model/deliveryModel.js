@@ -1,6 +1,8 @@
 const { ObjectID } = require('mongodb');
 const db = require('../src/database')(); //call database;
 const COLLECTION = 'delivery'; //name collection to database;
+const validations = require('../src/validations')();
+const waitingTime = '30 minutes'; //set waiting time;
 
 
 module.exports = () => {
@@ -12,7 +14,7 @@ module.exports = () => {
             try {
                 const query = { 'status': 'open' };
                 //select information that can be accessed;
-                const project = { 'address': 1 };
+                const project = { 'address': 1, 'time': 1, 'paid': 1 };
                 const delivery = await db.find(COLLECTION, query, project);
                 if (delivery.length === 0) {
                     return null;
@@ -61,14 +63,69 @@ module.exports = () => {
         }
     }
 
-    const addByStaff = async (costumer, date, orders, address, comment, status, time, paid) => {
+    const addByStaff = async (userID, name, phoneNumber, address, date, order, comment, status, time, paid) => {
         console.log('  inside post delivery');
+        let total;
+        let orders = [];
+        //validate entries;
+        if (!name) {
+            return { error: 'Costumer name is missing.' };
+        }
+        if (!phoneNumber) {
+            return { error: 'Phone number is missing.' };
+        }
+        if (!date) {
+            date = new Date();
+        }
+        if (!order) {
+            return { error: 'Order is missing.' }; //return if no order is informed;
+        } else {
+            const valid = await validations.orderValidation(order, userID);
+            if (valid == -1) {
+                //return if no order is not valid;
+                return { error: 'Order must have pairs of dish and quantity' };
+            } else if (valid == null) {
+                //return if objectID is not valid;
+                return { error: 'ObjectID is not valid.' };
+            } else {
+                //return order with final price;
+                orders = valid.orders;
+                total = parseFloat(valid.total).toFixed(2);
+            }
+        }
+        if (!address) {
+            return { error: 'Address is missing.' };
+
+        } else {
+            //validate address;
+            const validAddress = await validations.addressValidation(address);
+            if (!validAddress['lat'] || !validAddress['long']) {
+                //error if address is not valid;
+                return { error: 'Address is not valid.' };
+            }
+        }
+        
+        if (!comment) {
+            comment = 'no comments'; //set comment default;
+        }
+        if (!status) {
+            status = "open"; //set status default;
+        }
+        if (!time) {
+            time = waitingTime; //set time default;
+        }
+        if (!paid) {
+            paid = 'not paid'; //set paid default;
+        }
+        
         try {
             const results = await db.add(COLLECTION, {
-                costumer: costumer,
+                costumer: name,
+                phoneNumber: phoneNumber,
+                address: address,
                 date: date,
                 orders: orders,
-                address: address,
+                price: total,
                 comment: comment,
                 status: status,
                 time: time,
@@ -83,21 +140,64 @@ module.exports = () => {
         }
     };
 
-    const addByCostumer = async (userID, date, orders, comment, status, time, paid) => {
+    const addByCostumer = async (userID, address, date, order, comment, status, time, paid) => {
         console.log('  inside post delivery');
         let user;
         let costumer;
         let email;
-        let address;
+        let total;
+        let orders = [];
+
+        //validate entries;
+        if (!date) {
+            date = new Date();
+        }
+        if (!order) {
+            return { error: 'Order is missing.' }; //return if no order is informed;
+        } else {
+            const valid = await validations.orderValidation(order, userID);
+            if (valid == -1) {
+                //return if no order is not valid;
+                return { error: 'Order must have pairs of dish and quantity' };
+            } else if (valid == null) {
+                //return if objectID is not valid;
+                return { error: 'ObjectID is not valid.' };
+            } else {
+                //return order with final price;
+                orders = valid.orders;
+                total = parseFloat(valid.total).toFixed(2);
+            }
+        }
+        if (!address) {
+            return { error: 'Address is missing.' };
+
+        } else {
+            //validate address;
+            const validAddress = await validations.addressValidation(address);
+            if (!validAddress['lat'] || !validAddress['long']) {
+                //error if address is not valid;
+                return { error: 'Address is not valid.' };
+            }
+        }
+        
+        if (!comment) {
+            comment = 'no comments'; //set comment default;
+        }
+        if (!status) {
+            status = "open"; //set status default;
+        }
+        if (!time) {
+            time = waitingTime; //set time default;
+        }
+        if (!paid) {
+            paid = 'not paid'; //set paid default;
+        }
+
         try {
             //check user id and collect user name;
             user = await db.get('users', { '_id': ObjectID(userID) });
             costumer = user[0].name;
             email = user[0].email; //collect user email to send notification;
-            address = user[0].address; //collect user address;
-            if (!address) {
-                return null;
-            }
         } catch (ex) {
             //return if any error occurs when connecting to database;
             console.log("=== Exception delivery model::user");
@@ -107,16 +207,17 @@ module.exports = () => {
             const results = await db.add(COLLECTION, {
                 userID: userID,
                 costumer: costumer,
+                address: address,
                 date: date,
                 orders: orders,
-                address: address,
+                price: total,
                 comment: comment,
                 status: status,
                 time: time,
                 paid: paid
             });
             //return email to send notification;
-            return email;
+            return {results: email};
         } catch (ex) {
             //return if any error occurs when connecting to database;
             console.log("=== Exception delivery model::add");

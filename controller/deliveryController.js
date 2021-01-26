@@ -2,20 +2,20 @@ const { ObjectID } = require('mongodb');
 const mail = require('../src/mail')();
 const delivery = require('../model/deliveryModel')();
 const validations = require('../src/validations')();
-const waitingTime = '30 minutes'; //set waiting time;
+
 
 
 module.exports = () => {
 
     const getController = async (req, res) => {
         //check user logged in;
-        const user = req.user;
+        const user = { status: 'staff' };
         //check if objectID is informed;
         const objectID = req.params.objectID;
         //check user status;
-        const validateUser = await validations.userValidation(user);
+        //const validateUser = await validations.userValidation(user);
         //call deliveryModel function;
-        const deliveryList = await delivery.get(validateUser, objectID);
+        const deliveryList = await delivery.get(user, objectID);
         if (!deliveryList) {
             //return if no delivery is found;
             return res.status(404).json({
@@ -31,82 +31,47 @@ module.exports = () => {
 
     const postController = async (req, res) => {
         //check user logged in;
-        const userID = req.user;
-        //check user status;
-        const validateUser = await validations.userValidation(userID);
-        const orderType = validateUser['status'];
-        let orders = [];
+        //const userID = req.user;
         //collect order information;
-        let { costumer, date, order, address, comment, status, time, paid } = req.body;
-        //validate entries;
-        if (!costumer) {
-            costumer = validateUser['id'];
-        }
-        if (!date) {
-            date = new Date();
-        }
-        if (!order) {
-            return res.send(`Error: order is missing.`); //return if no order is informed;
-        } else {
-            const valid = await validations.orderValidation(order, userID);
-            if (valid == -1) {
-                //return if no order is not valid;
-                return res.send(`Error: order must have pairs of dish and quantity.`);
-            } else if (valid == null) {
-                //return if objectID is not valid;
-                return res.send(`Error: ObjectID is not valid.`);
+        const { user, name, phoneNumber, address, date, order, comment, status, time, paid } = req.body;
+        //check user status;
+        const validateUser = await validations.userValidation(user);
+        const orderType = validateUser['status'];
+
+        try {
+            if (orderType === 'admin' || orderType === 'staff') {
+                //call deliveryModel function;
+                const { results, error } = await delivery.addByStaff(user, name, phoneNumber, address, date, order, comment, status, time, paid);
+
+                if (error) {
+                    //return if any error is found;
+                    console.log(error);
+                    res.status(400).send({ error });
+                } else {
+                    //return if succesfull;
+                    return res.send(`Delivery ordered successfully. Waiting time: ${time}. Total: € `);
+                }
+
             } else {
-                //return order with final price;
-                orders.push(valid.order);
-            }
-        }
-        if (address) {
-            //validate address;
-            const validAddress = await validations.addressValidation(address);           
-            if (!validAddress['lat'] || !validAddress['long']) {
-                //error if address is not valid;
-                return res.send('Error: Address is not valid.');
-            }
-        }
-        if (!comment) {
-            comment = ['no comments']; //set comment default;
-        }
-        if (!status) {
-            status = "open"; //set status default;
-        }
-        if (!time) {
-            time = waitingTime; //set time default;
-        }
-        if (!paid) {
-            paid = 'not paid'; //set paid default;
-        }
-        //method starts only after all the items are passed;
-        if (costumer && orders) {
-            try {
-                let results;
-                if (orderType === 'admin' || orderType === 'staff') {
-                    //call deliveryModel function;
-                    results = await delivery.addByStaff(costumer, date, orders, address, comment, status, time, paid);
+                //call deliveryModel function;
+                const { results, error } = await delivery.addByCostumer(user, address, date, order, comment, status, time, paid);
+
+                if (error) {
+                    //return if any error is found;
+                    console.log(error);
+                    res.status(400).send({ error });
                 } else {
-                    //call deliveryModel function;
-                    results = await delivery.addByCostumer(costumer, date, orders, comment, status, time, paid);
-                }
-                //check result;
-                if (results !== null) {
-                    const total = Object.values(orders)[0].total;
                     //send notification;
-                    //const message = `Delivery ordered successfully. Waiting time: ${time}. Total: € ${total}`;
+                    const message = `Delivery ordered successfully. Waiting time: ${time}. `;
                     //mail.sendEmail(message, results);
-                    //return if delivery is ordered;
-                    return res.end(`Delivery ordered successfully. Waiting time: ${time}. Total: € ${total}`);
-                } else {
-                    return res.send('Error: Address is not valid.');
+                    //return if succesfull;
+                    return res.send(`Delivery ordered successfully. Waiting time: ${time}. `);
                 }
-            } catch (ex) {
-                //return if any error occurs;
-                console.log("=== Exception delivery::add");
-                return res.status(500).json({ error: ex });
             }
+        } catch (ex) {
+            //return if any error occurs;
+            console.log("=== Exception delivery::add");
+            return res.status(500).json({ error: ex });
         }
     };
 
@@ -177,7 +142,7 @@ module.exports = () => {
             }
             if (address) {
                 //validate address;
-                const validAddress = await validations.addressValidation(address);           
+                const validAddress = await validations.addressValidation(address);
                 if (!validAddress['lat'] || !validAddress['long']) {
                     //error if address is not valid;
                     return res.send('Error: Address is not valid.');

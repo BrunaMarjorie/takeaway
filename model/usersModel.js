@@ -59,11 +59,22 @@ module.exports = () => {
         }
     }
 
-    const add = async (name, email, status, password, confPassword) => {
+    const add = async (name, phoneNumber, email, status, password, confPassword) => {
         let hash;
         if (!name) {
             //error if no name is informed.
             return { error: 'Name is missing.' };
+        }
+        if (!phoneNumber) { 
+            //error if no name is informed.
+            return { error: 'Phone number is missing.' };
+        } else {
+            const phoneValid = phoneNumber.replace(/[^0-9]/g, '');
+            //validate phone number format;
+            if (phoneValid.length != 10) {
+                //return if phone number format is not valid;
+                return { error: 'Phone number format not valid.' };
+            } 
         }
         if (!email) {
             //error if no email is informed;
@@ -106,6 +117,7 @@ module.exports = () => {
             try {
                 const results = await db.add(COLLECTION, {
                     name: name,
+                    phoneNumber: phoneNumber,
                     email: email,
                     status: status,
                     password: hash,

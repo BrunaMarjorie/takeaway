@@ -9,13 +9,13 @@ module.exports = () => {
 
     const getController = async (req, res) => {
         //check user logged in;
-        const user = req.user;
+        const user = {status: 'staff'};
         //check if objectID is informed;
         const objectID = req.params.objectID;
         //check user status;
-        const validateUser = await validations.userValidation(user);
+        //const validateUser = await validations.userValidation(user);
         //call takeawayModel function;
-        const takeawayList = await takeaway.get(validateUser, objectID);
+        const takeawayList = await takeaway.get(user, objectID);
         if (!takeawayList) {
             //return if no takeaway is found;
             return res.status(404).json({
@@ -31,72 +31,48 @@ module.exports = () => {
 
     const postController = async (req, res) => {
         //check user logged in;
-        const userID = req.user;
-        //check user status;
-        const validateUser = await validations.userValidation(userID);
-        const orderType = validateUser['status'];
-        let orders = [];
+        //const userID = req.user;
         //collect order information;
-        let { costumer, date, order, comment, status, time, paid } = req.body;
-        //validate entries;
-        if (!costumer) {
-            costumer = validateUser['id'];
-        }
-        if (!date) {
-            date = new Date();
-        }
-        if (!order) {
-            return res.send(`Error: order is missing.`); //return if no order is informed;
-        } else {
-            const valid = await validations.orderValidation(order, userID);
-            if (valid == -1) {
-                //return if no order is not valid;
-                return res.send(`Error: order must have pairs of dish and quantity.`);
-            } else if (valid == null) {
-                //return if objectID is not valid;
-                return res.send(`Error: ObjectID is not valid.`);
-            } else {
-                //return order with final price;
-                orders.push(valid.order);
-            }
-        }
-        if (!comment) {
-            comment = ['no comments']; //set comment default;
-        }
-        if (!status) {
-            status = "open"; //set status default;
-        }
-        if (!time) {
-            time = waitingTime; //set time default;
-        }
-        if (!paid) {
-            paid = 'not paid'; //set paid default;
-        }
-        //method starts only after all the items are passed;
-        if (costumer && orders) {
-            try {
-                let results;
-                if (orderType === 'admin' || orderType === 'staff') {
-                    //call takeawayModel function;
-                    results = await takeaway.addByStaff(costumer, date, orders, comment, status, time, paid);
+        const { user, name, phoneNumber, date, order, comment, status, time, paid } = req.body;
+        //check user status;
+        const validateUser = await validations.userValidation(user);
+        const orderType = validateUser['status'];
+
+        try {
+            if (orderType === 'admin' || orderType === 'staff') {
+                //call takeawayModel function;
+                const { results, error } = await takeaway.addByStaff(user, name, phoneNumber, date, order, comment, status, time, paid);
+
+                if (error) {
+                    //return if any error is found;
+                    console.log(error);
+                    res.status(400).send({ error });
                 } else {
-                    //call takeawayModel function;
-                    results = await takeaway.addByCostumer(costumer, date, orders, comment, status, time, paid);
+                    //return if succesfull;
+                    return res.send(`Takeaway ordered successfully. Waiting time: ${time}. Total: € `);
                 }
-                //check result;
-                if (results !== null) {
-                    const total = Object.values(orders)[0].total;
+
+
+            } else {
+                //call takeawayModel function;
+                const { results, error } = await takeaway.addByCostumer(user, date, order, comment, status, time, paid);
+
+                if (error) {
+                    //return if any error is found;
+                    console.log(error);
+                    res.status(400).send({ error });
+                } else {
                     //send notification;
-                    //const message = `Takeaway ordered successfully. Waiting time: ${time}. Total: € ${total}`;
+                    const message = `Takeaway ordered successfully. Waiting time: ${time}. `;
                     //mail.sendEmail(message, results);
-                    //return if takeaway is ordered;
-                    return res.end(`Takeaway ordered successfully. Waiting time: ${time}. Total: € ${total}`);
+                    //return if succesfull;
+                    return res.send(`Takeaway ordered successfully. Waiting time: ${time}. `);
                 }
-            } catch (ex) {
-                //return if any error occurs;
-                console.log("=== Exception takeaway::add");
-                return res.status(500).json({ error: ex });
             }
+        } catch (ex) {
+            //return if any error occurs;
+            console.log("=== Exception takeaway::add");
+            return res.status(500).json({ error: ex });
         }
     };
 
@@ -157,10 +133,10 @@ module.exports = () => {
         } else {
             if (order) { //routine if order is passed;
                 const newOrder = await validations.orderValidation(order, userID);
-                if (newOrder !== null && newOrder !== -1){
+                if (newOrder !== null && newOrder !== -1) {
                     data['orders'] = newOrder.order;
                 } else if (newOrder === -1) {
-                    return res.end(`Error: dish and/or quantity is missing.`);        
+                    return res.end(`Error: dish and/or quantity is missing.`);
                 } else {
                     return res.end(`Error: please contact the restaurant to update takeaway.`);
                 }
@@ -251,7 +227,7 @@ module.exports = () => {
         postController,
         deleteController,
         updateController,
-        searchController, 
+        searchController,
         lastOrderController
     }
 }

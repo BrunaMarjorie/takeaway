@@ -49,19 +49,19 @@ module.exports = (function () {
 
 
     //takeaway routes;
-    routes.get('/takeaway', session.isAuthenticated, takeaway.getController);
+    routes.get('/takeaway', takeaway.getController);
     routes.get('/takeaway/lastorder', session.isAuthenticated, takeaway.lastOrderController);
-    routes.get('/takeaway/:objectID', session.isAuthenticated, takeaway.getController);
+    routes.get('/takeaway/:objectID', takeaway.getController);
     routes.get('/search/takeaway', session.isAuthenticated, takeaway.searchController);
-    routes.post('/takeaway', session.isAuthenticated, takeaway.postController);
+    routes.post('/takeaway', takeaway.postController);
     routes.delete('/takeaway/:objectID', session.isAuthenticated, takeaway.deleteController);
     routes.put('/takeaway/:objectID', session.isAuthenticated, takeaway.updateController);
 
 
     //delivery routes;
-    routes.get('/delivery', session.isAuthenticated, delivery.getController);
+    routes.get('/delivery', delivery.getController);
     routes.get('/delivery/lastorder', session.isAuthenticated, delivery.lastOrderController);
-    routes.get('/delivery/:objectID', session.isAuthenticated, delivery.getController);
+    routes.get('/delivery/:objectID', delivery.getController);
     routes.get('/search/delivery', session.isAuthenticated, delivery.searchController);
     routes.post('/delivery', session.isAuthenticated, delivery.postController);
     routes.delete('/delivery/:objectID', session.isAuthenticated, delivery.deleteController);

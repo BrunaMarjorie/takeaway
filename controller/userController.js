@@ -30,9 +30,9 @@ module.exports = () => {
 
     const postController = async (req, res) => {
         //collect information;
-        const { name, email, status, password, confPassword } = req.body;
+        const { name, phoneNumber, email, status, password, confPassword } = req.body;
         try {
-            const { results, error } = await users.add(name, email, status, password, confPassword);
+            const { results, error } = await users.add(name, phoneNumber, email, status, password, confPassword);
             if (error) {
                 //return if any error is found;
                 console.log(error);

@@ -55,6 +55,7 @@ module.exports = () => {
         let valid;
         let userStatus;
         let temp = {};
+        const array = [];
         try {
             valid = await db.get('users', { '_id': ObjectID(userID) });
             userStatus = (Object.values(valid)[0].status);
@@ -85,21 +86,22 @@ module.exports = () => {
                     return null;
                 }
                 if (valid.length > 0) {
-                    const dish = Object.values(valid)[0].number;
-                    let quantity = (order[i].quantity);
+                    const item = Object.values(valid)[0].number;
+                    const dish = Object.values(valid)[0].dish;
+                    const quantity = (order[i].quantity);
                     if (quantity <= 0 && userStatus === 'costumer') {
                         return null;
                     }
-                    let price = (Object.values(valid)[0].price);
+                    const price = (Object.values(valid)[0].price);
                     orderTotalPrice += (quantity * price);
-                    temp[dish] = quantity;
+                    temp = { item: item, dish: dish, quantity: quantity, price: price };
+                    array.push(temp);
                 } else {
                     return null;
                 }
             }
         }
-        temp['total'] = orderTotalPrice;
-        return { 'order': temp };
+        return {orders: array, total: orderTotalPrice};
     }
 
     const userValidation = async (userID) => {
@@ -139,7 +141,7 @@ module.exports = () => {
             .catch((error) => {
                 console.log(error);
             });
-            return { 'lat': lat, 'long': long }
+        return { 'lat': lat, 'long': long }
     }
 
     return {

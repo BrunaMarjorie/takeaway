@@ -87,12 +87,14 @@ module.exports = () => {
         }
         //return when successfull;
         console.log('logged');
-        return res.send({email: user.email, status: user.status, name: user.name});
+        return res.send(user);
     }
 
     const isAuthenticated = async (req, res, next) => {
         //const username = req.headers.email;
-        const { user } = req.body;
+        const email = req.params;
+        const user = email;
+        console.log(user);
 
         if (!user) {
             //return if no information provided;
@@ -100,7 +102,7 @@ module.exports = () => {
         }
         try {
             //check user and token;
-            const user = await db.get(COLLECTION, { email: user });
+            const user = await db.get(COLLECTION, { email });
             const token = user[0].token;
 
             if (token) {
@@ -108,6 +110,7 @@ module.exports = () => {
                     //check if token is valid;
                     const decoded = verify(token, process.env.TOKEN);
                     req.user = decoded.user;
+                    console.log(req.user);
                     return next();
     
                 } catch (ex) {
