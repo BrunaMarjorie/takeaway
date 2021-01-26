@@ -2,7 +2,7 @@ const { ObjectID } = require('mongodb');
 const db = require('../src/database')(); //call database;
 const COLLECTION = 'delivery'; //name collection to database;
 const validations = require('../src/validations')();
-const waitingTime = '30 minutes'; //set waiting time;
+const restaurant = require('../src/restaurant')();
 
 
 module.exports = () => {
@@ -112,7 +112,9 @@ module.exports = () => {
             status = "open"; //set status default;
         }
         if (!time) {
-            time = waitingTime; //set time default;
+            //set time default;
+            const { delivery } = await restaurant.getWaitingTime();
+            time = delivery;
         }
         if (!paid) {
             paid = 'not paid'; //set paid default;
@@ -187,7 +189,9 @@ module.exports = () => {
             status = "open"; //set status default;
         }
         if (!time) {
-            time = waitingTime; //set time default;
+            //set time default;
+            const { delivery } = await restaurant.getWaitingTime();
+            time = delivery;
         }
         if (!paid) {
             paid = 'not paid'; //set paid default;

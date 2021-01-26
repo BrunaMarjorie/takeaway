@@ -7,55 +7,6 @@ const MONGO_OPTIONS = { useUnifiedTopology: true, useNewUrlParser: true };
 
 module.exports = () => {
 
-    const createCollection = (collectionName, query = {}) => {
-        return new Promise((resolve, reject) => {
-            MongoClient.connect(uri, MONGO_OPTIONS, (err, client) => {
-                if (err) {
-                    console.log(err);
-                    return reject("=== count::MongoClient.connect");
-                } else {
-                    const db = client.db(DB_NAME);
-                    console.log(query);
-                    db.createCollection(collectionName, query, (err, docs) => {
-                        if (err) {
-                            console.log("=== create::db.createCollection");
-                            console.log(err);
-                            return reject(err);
-                        } else {
-                            resolve(docs);
-                            client.close();
-                        }
-                    });
-                }
-            });
-        });
-
-    }
-
-    const count = (collectionName, query = {}) => {
-        return new Promise((resolve, reject) => {
-            MongoClient.connect(uri, MONGO_OPTIONS, (err, client) => {
-                if (err) {
-                    console.log(err);
-                    return reject("=== count::MongoClient.connect");
-                } else {
-                    const db = client.db(DB_NAME);
-                    const collection = db.collection(collectionName);
-                    collection.countDocuments(query, (err, docs) => {
-                        if (err) {
-                            console.log("=== count::collection.countDocuments");
-                            console.log(err);
-                            return reject(err);
-                        } else {
-                            resolve(docs);
-                            client.close();
-                        }
-                    });
-                }
-            });
-        });
-    };
-
     const get = (collectionName, query = {}) => {
         return new Promise((resolve, reject) => {
             MongoClient.connect(uri, MONGO_OPTIONS, (err, client) => {
@@ -272,10 +223,8 @@ module.exports = () => {
     };
 
     return {
-        createCollection,
         get,
         add,
-        count,
         find,
         aggregate,
         updateData,

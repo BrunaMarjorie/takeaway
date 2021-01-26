@@ -4,6 +4,7 @@ const takeaway = require('../controller/takeawayController')();
 const users = require('../controller/userController')();
 const delivery = require('../controller/deliveryController')();
 const session = require('./session')();
+const restaurant = require('./restaurant')();
 
 module.exports = (function () {
 
@@ -33,9 +34,9 @@ module.exports = (function () {
 
 
     //bookings routes;
-    routes.get('/bookings', session.isAuthenticated, bookings.getController);
+    routes.get('/bookings', bookings.getController);
     routes.get('/bookings/:date', session.isAuthenticated, bookings.getByDate);
-    routes.post('/bookings', session.isAuthenticated, bookings.postController);
+    routes.post('/bookings', bookings.postController);
     routes.delete('/bookings/:objectID', session.isAuthenticated, bookings.deleteController);
     routes.put('/bookings/:objectID', session.isAuthenticated, bookings.updateController);
 
@@ -66,6 +67,11 @@ module.exports = (function () {
     routes.post('/delivery', session.isAuthenticated, delivery.postController);
     routes.delete('/delivery/:objectID', session.isAuthenticated, delivery.deleteController);
     routes.put('/delivery/:objectID', session.isAuthenticated, delivery.updateController);
+
+
+    //waiting time routes;
+    routes.get('/waitingTime', restaurant.getWaitingTime);
+    routes.put('/waitingTime', restaurant.updateWaitingTime);
 
 
     return routes;
