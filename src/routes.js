@@ -64,7 +64,7 @@ module.exports = (function () {
     routes.get('/delivery/lastorder', session.isAuthenticated, delivery.lastOrderController);
     routes.get('/delivery/:objectID', delivery.getController);
     routes.get('/search/delivery', session.isAuthenticated, delivery.searchController);
-    routes.post('/delivery', session.isAuthenticated, delivery.postController);
+    routes.post('/delivery', delivery.postController);
     routes.delete('/delivery/:objectID', session.isAuthenticated, delivery.deleteController);
     routes.put('/delivery/:objectID', session.isAuthenticated, delivery.updateController);
 
