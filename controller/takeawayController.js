@@ -199,7 +199,9 @@ module.exports = () => {
 
 
     const lastOrderController = async (req, res) => {
-        userID = req.user;
+        //userID = req.user;
+        const {userID} = req.params;
+        
         try {
             //call takeaway Model function with search;
             const searchOrder = await takeaway.lastOrder(userID);

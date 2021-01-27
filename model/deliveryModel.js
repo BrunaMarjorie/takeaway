@@ -347,11 +347,13 @@ module.exports = () => {
                     if (order.length === 0) {
                         return null;
                     } else {
-                        return Object.values(order)[0].orders;
+                        const lastOrder = Object.values(order)[0].orders;
+                        const total = Object.values(order)[0].total;
+                        return {order: lastOrder, total: total};
                     }
                 } catch (ex) {
                     //return if any error occurs when connecting to database;
-                    console.log("=== Exception order::get");
+                    console.log("=== Exception lastOrder::get");
                     return { error: ex };
                 }
             }

@@ -17,8 +17,8 @@ module.exports = (function () {
 
     //login route; 
     routes.post('/users/register', users.postController);
-    routes.post('/users/login', session.loginController);
-    routes.post('/users/logout', session.logoutController);
+    routes.post('/login', session.loginController);
+    routes.post('/logout', session.logoutController);
     routes.post('/forgot/password', session.forgotController);
     routes.put('/:email/reset/password', session.forgotController);
     
@@ -51,7 +51,7 @@ module.exports = (function () {
 
     //takeaway routes;
     routes.get('/takeaway', takeaway.getController);
-    routes.get('/takeaway/lastorder', session.isAuthenticated, takeaway.lastOrderController);
+    routes.get('/takeaway/lastorder/:userID', takeaway.lastOrderController);
     routes.get('/takeaway/:objectID', takeaway.getController);
     routes.get('/search/takeaway', session.isAuthenticated, takeaway.searchController);
     routes.post('/takeaway', takeaway.postController);
@@ -61,7 +61,7 @@ module.exports = (function () {
 
     //delivery routes;
     routes.get('/delivery', delivery.getController);
-    routes.get('/delivery/lastorder', session.isAuthenticated, delivery.lastOrderController);
+    routes.get('/delivery/lastorder/:userID', delivery.lastOrderController);
     routes.get('/delivery/:objectID', delivery.getController);
     routes.get('/search/delivery', session.isAuthenticated, delivery.searchController);
     routes.post('/delivery', delivery.postController);

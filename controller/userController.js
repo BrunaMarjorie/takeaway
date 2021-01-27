@@ -36,12 +36,12 @@ module.exports = () => {
             if (error) {
                 //return if any error is found;
                 console.log(error);
-                res.status(400).send({ error });
+                return res.status(400).send({ error });
             } else {
                 //send notification if succesfull;
                 const message = 'Welcome to Takeaway Restaurant!'
                 //mail.sendEmail(message, email);
-                res.send(`POST: ${name}, ${email}`);
+                return res.send(`POST: ${name}, ${email}`);
             }
         } catch (ex) {
             console.log("=== Exception user::add");

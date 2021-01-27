@@ -208,7 +208,9 @@ module.exports = () => {
 
 
     const lastOrderController = async (req, res) => {
-        userID = req.user;
+        //userID = req.user;
+        const {userID} = req.params;
+        
         try {
             //call delivery Model function with search;
             const searchOrder = await delivery.lastOrder(userID);

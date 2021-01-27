@@ -67,7 +67,7 @@ module.exports = () => {
                     new Date(), clientIp);
                 FailedAuthMessage.code = "02";
                 FailedAuthMessage.message = "Incorrect email and/or password";
-                return res.status(401).json(FailedAuthMessage);
+                return res.status(401).json({ error: "Incorrect email and/or password" });
             }
 
             // assign a validation token to the user
@@ -112,7 +112,7 @@ module.exports = () => {
                     req.user = decoded.user;
                     console.log(req.user);
                     return next();
-    
+
                 } catch (ex) {
                     //return if any error occurs;
                     console.log("=== Exception session::isAuthenticated.");
@@ -122,7 +122,7 @@ module.exports = () => {
                 //return if token not valid.
                 return res.status(401).json('You must be logged in to access this page.');
             }
-            
+
 
         } catch (ex) {
             //return if any error occurs;
@@ -140,7 +140,7 @@ module.exports = () => {
         try {
             //check user information;
             const user = await db.find(COLLECTION, { email: username });
-            
+
             const filter = { '_id': ObjectID(user) };
             //set info to be updated;
             const updateDoc = { '$set': { 'token': null } };
@@ -159,21 +159,36 @@ module.exports = () => {
     const forgotController = async (req, res) => {
         const { email } = req.body;
 
-        //create link to be send;
-        const link = `https://radiant-island-78141.herokuapp.com/reset/password/${email}/reset/password`
+        try {
 
-        console.log(link);
+            const result = await db.get(COLLECTION, { email });
+            
+            if (result.length <= 0) {
+                console.log('here');
+                return res.send({ error: "User not found" });
+            
+            } else {
+                //create link to be send;
+                const link = `https://santanas-api.herokuapp.com/reset/password/${email}/reset/password`
 
-        //message to be sent;
-        const message = `Please access the link below to reset your password.`;
+                //message to be sent;
+                const message = `Please access the link below to reset your password`;
 
-        const notification = mail.sendEmail(message, email);
+                const notification = mail.sendEmail(message, email);
 
-        if (notification !== null) {
-            return 1;
-        } else {
-            return null;
+                if (notification !== null) {
+                    return res.send("Email sent");
+                } else {
+                    return res.send({ error: "Some error has occurred. Please, try again." });
+                }
+            }
+        } catch (error) {
+            console.log(error);
+            return res.status(400).send({ error });
+
         }
+
+
     }
 
     return {

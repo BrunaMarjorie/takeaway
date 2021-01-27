@@ -114,7 +114,7 @@ module.exports = () => {
                 phoneNumber: phoneNumber,
                 date: date,
                 orders: orders,
-                price: total,
+                total: total,
                 comment: comment,
                 status: status,
                 time: time,
@@ -186,7 +186,7 @@ module.exports = () => {
                 costumer: costumer,
                 date: date,
                 orders: orders,
-                price: total,
+                total: total,
                 comment: comment,
                 status: status,
                 time: time,
@@ -316,10 +316,13 @@ module.exports = () => {
                 try {
                     const filter = { 'userID': userID };
                     const order = await db.findLastOrder(COLLECTION, filter);
+                    console.log(order);
                     if (order.length === 0) {
                         return null;
                     } else {
-                        return Object.values(order)[0].orders;
+                        const lastOrder = Object.values(order)[0].orders;
+                        const total = Object.values(order)[0].total;
+                        return {order: lastOrder, total: total};
                     }
                 } catch (ex) {
                     //return if any error occurs when connecting to database;
@@ -329,7 +332,7 @@ module.exports = () => {
             }
         } catch (ex) {
             //return if any error occurs when connecting to database;
-            console.log("=== Exception takeaway::update/find");
+            console.log("=== Exception takeaway::lastOrder");
             return { error: ex };
         }
     }
