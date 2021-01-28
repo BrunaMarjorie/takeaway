@@ -17,7 +17,7 @@ module.exports = (function () {
 
     //login route; 
     routes.post('/users/register', users.postController);
-    routes.post('/login', session.loginController);
+    routes.post('/users/login', session.loginController);
     routes.post('/logout', session.logoutController);
     routes.post('/forgot/password', session.forgotController);
     routes.put('/:email/reset/password', session.forgotController);
