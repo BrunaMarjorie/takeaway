@@ -65,10 +65,7 @@ module.exports = () => {
     const postController = async (req, res) => {
         //collect client information;
         const { date, time, number, email, name, phoneNumber } = req.body;
-        //let date = new Date(req.body.date); //convert date to Date format;
-        //const userID = req.user._id;
-        //const email = req.user.email;
-
+        
         console.log('  inside post bookings');
         try {
             //call bookingModel function;
@@ -80,9 +77,10 @@ module.exports = () => {
                 res.status(400).send({ error });
             } else {
                 //send notification;
-                mail.sendEmail('created', email);
+                const message = `Booking successfull: ${number} people, on ${date}.`;
+                mail.sendEmail(message, email);
                 //return if date is available;
-                return res.end(`Booking successfull: ${email}, on ${date}`);
+                return res.end(`Booking successfull: ${number} people, on ${date}`);
             }
         } catch (ex) {
             //return if any error occurs;

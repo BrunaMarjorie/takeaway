@@ -35,7 +35,7 @@ module.exports = (function () {
 
     //bookings routes;
     routes.get('/bookings', bookings.getController);
-    routes.get('/bookings/:date', session.isAuthenticated, bookings.getByDate);
+    routes.get('/bookings/:_id/:date', session.isAuthenticated, bookings.getByDate);
     routes.post('/bookings', bookings.postController);
     routes.delete('/bookings/:objectID', session.isAuthenticated, bookings.deleteController);
     routes.put('/bookings/:objectID', session.isAuthenticated, bookings.updateController);

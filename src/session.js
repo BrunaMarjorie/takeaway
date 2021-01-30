@@ -87,22 +87,23 @@ module.exports = () => {
         }
         //return when successfull;
         console.log('logged');
+        req.user = user._id;
+        console.log(req.user);
         return res.send(user);
     }
 
     const isAuthenticated = async (req, res, next) => {
         //const username = req.headers.email;
-        const email = req.params;
-        const user = email;
-        console.log(user);
+        const {userID} = req.body;
+        console.log(userID);
 
-        if (!user) {
+        if (!userID) {
             //return if no information provided;
             return res.status(401).json('No user logged in.');
         }
         try {
             //check user and token;
-            const user = await db.get(COLLECTION, { email });
+            const user = await db.get(COLLECTION, { '_id': ObjectID(userID) });
             const token = user[0].token;
 
             if (token) {

@@ -64,7 +64,7 @@ module.exports = () => {
                 } else {
                     //send notification;
                     const message = `Takeaway ordered successfully. Waiting time: ${time}. `;
-                    //mail.sendEmail(message, results);
+                    mail.sendEmail(message, results);
                     //return if succesfull;
                     return res.send(`Takeaway ordered successfully. Waiting time: ${time}. `);
                 }

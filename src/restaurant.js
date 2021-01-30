@@ -27,17 +27,18 @@ module.exports = () => {
     const updateWaitingTime = async (req, res) => {
         console.log('   inside update waiting time');
         //collecting information
-        const { takeawayTime, deliveryTime } = req.body;
+        const { takeaway, delivery } = req.body;
         let data = {};
 
-        if (takeawayTime) {
-            data['takeawayTime'] = takeawayTime;
+        if (takeaway) {
+            data['takeawayTime'] = takeaway;
         }
 
-        if (deliveryTime) {
-            data['deliveryTime'] = deliveryTime;
+        if (delivery) {
+            data['deliveryTime'] = delivery;
         }
 
+        console.log(data);
         try {
             const filter = { '_id': ObjectID('600826a74ae7335e112a95c5') };
             const updateDoc = { '$set': data };
