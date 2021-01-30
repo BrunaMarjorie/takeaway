@@ -34,8 +34,6 @@ module.exports = () => {
                 //select information that can be accessed;
                 const project = {};
                 const delivery = await db.find(COLLECTION, query, project);
-                console.log('here');
-                console.log(delivery);
                 if (delivery.length === 0) {
                     return null;
                 } else {
@@ -127,7 +125,7 @@ module.exports = () => {
                 address: address,
                 date: date,
                 orders: orders,
-                price: total,
+                total: total,
                 comment: comment,
                 status: status,
                 time: time,
@@ -214,7 +212,7 @@ module.exports = () => {
                 address: address,
                 date: date,
                 orders: orders,
-                price: total,
+                total: total,
                 comment: comment,
                 status: status,
                 time: time,

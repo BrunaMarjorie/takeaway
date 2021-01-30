@@ -46,7 +46,7 @@ module.exports = () => {
                 if (error) {
                     //return if any error is found;
                     console.log(error);
-                    res.status(400).send({ error });
+                    return res.status(400).send({ error });
                 } else {
                     //return if succesfull;
                     return res.send(`Delivery ordered successfully. Waiting time: ${time}. Total: € `);
@@ -59,7 +59,7 @@ module.exports = () => {
                 if (error) {
                     //return if any error is found;
                     console.log(error);
-                    res.status(400).send({ error });
+                    return res.status(400).send({ error });
                 } else {
                     //send notification;
                     const message = `Delivery ordered successfully. Waiting time: ${time}. `;
