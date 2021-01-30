@@ -55,7 +55,7 @@ module.exports = () => {
 
             } else {
                 //call takeawayModel function;
-                const { results, error } = await takeaway.addByCostumer(user, date, order, comment, status, time, paid);
+                const { results, error } = await takeaway.addByCustomer(user, date, order, comment, status, time, paid);
 
                 if (error) {
                     //return if any error is found;

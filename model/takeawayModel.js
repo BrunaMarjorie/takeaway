@@ -16,7 +16,7 @@ module.exports = () => {
             try {
                 const query = {'status': 'open'}; //filter the access;
                 //select information that can be accessed;
-                const project = { 'costumer': 1, 'time': 1, 'paid': 1 };
+                const project = { 'customer': 1, 'time': 1, 'paid': 1 };
                 const takeaway = await db.find(COLLECTION, query, project);
                 if (takeaway.length === 0) {
                     return null;
@@ -49,7 +49,7 @@ module.exports = () => {
             }
         } else {
             try {
-                //if user is a costumer, only their takeaways can be accessed;
+                //if user is a customer, only their takeaways can be accessed;
                 const takeaway = await db.get(COLLECTION, { 'userID': userID['id'] });
                 if (takeaway.length === 0) {
                     return null;
@@ -70,7 +70,7 @@ module.exports = () => {
         let orders = [];
         //validate entries;
         if (!name) {
-            return { error: 'Costumer name is missing.' };
+            return { error: 'Customer name is missing.' };
         }
         if (!phoneNumber) {
             return { error: 'Phone number is missing.' };
@@ -110,7 +110,7 @@ module.exports = () => {
         }
         try {
             const results = await db.add(COLLECTION, {
-                costumer: name,
+                customer: name,
                 phoneNumber: phoneNumber,
                 date: date,
                 orders: orders,
@@ -129,11 +129,11 @@ module.exports = () => {
         }
     };
 
-    const addByCostumer = async (userID, date, order, comment, status, time, paid) => {
+    const addByCustomer = async (userID, date, order, comment, status, time, paid) => {
         console.log('  inside this post takeaway');
         let total;
         let user;
-        let costumer;
+        let customer;
         let email;
         let orders = [];
         //validate entries;
@@ -173,7 +173,7 @@ module.exports = () => {
         try {
             //check user id and collect user name;
             user = await db.get('users', { '_id': ObjectID(userID) });
-            costumer = user[0].name;
+            customer = user[0].name;
             email = user[0].email; //collect user email to send notification;
         } catch (ex) {
             //return if any error occurs when connecting to database;
@@ -183,7 +183,7 @@ module.exports = () => {
         try {
             const results = await db.add(COLLECTION, {
                 userID: userID,
-                costumer: costumer,
+                customer: customer,
                 date: date,
                 orders: orders,
                 total: total,
@@ -210,8 +210,8 @@ module.exports = () => {
             //validate objectID;
             const valid = await db.get(COLLECTION, { '_id': ObjectID(objectID) });
             if (valid.length > 0) {
-                if (status === 'costumer') {
-                    //return if user is a costumer; 
+                if (status === 'customer') {
+                    //return if user is a customer; 
                     return -1;
                 } else {
                     //delete only if user is a staff or an admin;
@@ -282,8 +282,8 @@ module.exports = () => {
             //return if no item is passed to be searched;
             return null;
         } else {
-            //search is not available for costumers;
-            if (status === 'costumer') {
+            //search is not available for customers;
+            if (status === 'customer') {
                 return null;
             } else {
                 try {
@@ -341,7 +341,7 @@ module.exports = () => {
     return {
         get,
         addByStaff,
-        addByCostumer,
+        addByCustomer,
         deleteData,
         updateData,
         search,

@@ -87,11 +87,11 @@ module.exports = () => {
             }
         }
         if (!status) {
-            //set status as 'costumer' if no status is informed;
-            status = 'costumer';
+            //set status as 'customer' if no status is informed;
+            status = 'customer';
             //validate usertype;
-        } else if (status !== "admin" && status !== "staff" && status !== "costumer") {
-            return { error: `User status is not valid. It must be 'admin', 'staff' or 'costumer'.` };
+        } else if (status !== "admin" && status !== "staff" && status !== "customer") {
+            return { error: `User status is not valid. It must be 'admin', 'staff' or 'customer'.` };
         }
         if (!password) {
             //error if no password is informed;

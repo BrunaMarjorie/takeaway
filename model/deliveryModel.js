@@ -9,7 +9,7 @@ module.exports = () => {
 
     const get = async (userID = null, objectID = null) => {
         console.log('   inside model delivery');
-        if (userID['status'] !== 'costumer' && objectID === null) {
+        if (userID['status'] !== 'customer' && objectID === null) {
             //if user is staff or admin, they can access all the deliveries;
             try {
                 const query = { 'status': 'open' };
@@ -27,7 +27,7 @@ module.exports = () => {
                 return { error: ex };
             }
 
-        } else if (userID['status'] !== 'costumer' && objectID !== null) { //routine if objectID is passed;
+        } else if (userID['status'] !== 'customer' && objectID !== null) { //routine if objectID is passed;
             //if user is staff or admin, they can access all the takeaways;
             try {
                 const query = { '_id': ObjectID(objectID) }; //filter the access;
@@ -48,7 +48,7 @@ module.exports = () => {
             }
         } else {
             try {
-                //if user is a costumer, only their deliveries can be accessed;
+                //if user is a customer, only their deliveries can be accessed;
                 const delivery = await db.get(COLLECTION, { 'userID': userID['id'] });
                 if (delivery.length === 0) {
                     return null;
@@ -69,7 +69,7 @@ module.exports = () => {
         let orders = [];
         //validate entries;
         if (!name) {
-            return { error: 'Costumer name is missing.' };
+            return { error: 'Customer name is missing.' };
         }
         if (!phoneNumber) {
             return { error: 'Phone number is missing.' };
@@ -122,7 +122,7 @@ module.exports = () => {
         
         try {
             const results = await db.add(COLLECTION, {
-                costumer: name,
+                customer: name,
                 phoneNumber: phoneNumber,
                 address: address,
                 date: date,
@@ -142,10 +142,10 @@ module.exports = () => {
         }
     };
 
-    const addByCostumer = async (userID, address, date, order, comment, status, time, paid) => {
+    const addByCustomer = async (userID, address, date, order, comment, status, time, paid) => {
         console.log('  inside post delivery');
         let user;
-        let costumer;
+        let customer;
         let email;
         let total;
         let orders = [];
@@ -200,7 +200,7 @@ module.exports = () => {
         try {
             //check user id and collect user name;
             user = await db.get('users', { '_id': ObjectID(userID) });
-            costumer = user[0].name;
+            customer = user[0].name;
             email = user[0].email; //collect user email to send notification;
         } catch (ex) {
             //return if any error occurs when connecting to database;
@@ -210,7 +210,7 @@ module.exports = () => {
         try {
             const results = await db.add(COLLECTION, {
                 userID: userID,
-                costumer: costumer,
+                customer: customer,
                 address: address,
                 date: date,
                 orders: orders,
@@ -238,8 +238,8 @@ module.exports = () => {
             //validate objectID;
             const valid = await db.get(COLLECTION, { '_id': ObjectID(objectID) });
             if (valid.length > 0) {
-                if (status === 'costumer') {
-                    //return if user is a costumer; 
+                if (status === 'customer') {
+                    //return if user is a customer; 
                     return -1;
                 } else {
                     //delete only if user is a staff or an admin;
@@ -310,8 +310,8 @@ module.exports = () => {
             //return if no item is passed to be searched;
             return null;
         } else {
-            //search is not available for costumers;
-            if (status === 'costumer') {
+            //search is not available for customers;
+            if (status === 'customer') {
                 return null;
             } else {
                 try {
@@ -368,7 +368,7 @@ module.exports = () => {
     return {
         get,
         addByStaff,
-        addByCostumer,
+        addByCustomer,
         deleteData,
         updateData,
         search,

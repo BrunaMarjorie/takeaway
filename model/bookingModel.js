@@ -13,7 +13,7 @@ module.exports = () => {
         let project;
         if (!date) {
             try {
-                if (userID['status'] === 'costumer') {
+                if (userID['status'] === 'customer') {
                     filter = { 'userID': userID['id'] }; //filter the access;    
                 } else {
                     filter = {}; //filter the access;
@@ -35,7 +35,7 @@ module.exports = () => {
             date.setHours(0); //set initial hour of the day;
             const dayAfter = new Date(date);
             dayAfter.setDate(date.getDate() + 1); //set final hour (24h);
-            if (userID['status'] === 'costumer') {
+            if (userID['status'] === 'customer') {
                 return null; //filter the access;    
             } else {
                 try {

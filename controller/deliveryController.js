@@ -54,7 +54,7 @@ module.exports = () => {
 
             } else {
                 //call deliveryModel function;
-                const { results, error } = await delivery.addByCostumer(user, address, date, order, comment, status, time, paid);
+                const { results, error } = await delivery.addByCustomer(user, address, date, order, comment, status, time, paid);
 
                 if (error) {
                     //return if any error is found;

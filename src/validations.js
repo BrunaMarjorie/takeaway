@@ -89,7 +89,7 @@ module.exports = () => {
                     const item = Object.values(valid)[0].number;
                     const dish = Object.values(valid)[0].dish;
                     const quantity = (order[i].quantity);
-                    if (quantity <= 0 && userStatus === 'costumer') {
+                    if (quantity <= 0 && userStatus === 'customer') {
                         return null;
                     }
                     const price = (Object.values(valid)[0].price);
